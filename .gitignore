@@ -1,5 +1,6 @@
 .stack-work/
 trello-reminders-server.cabal
 *~
-/database/backup.sqlcredentials.json
+/database/backup.sql
+backup.sql
 credentials.json
