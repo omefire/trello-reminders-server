@@ -5,7 +5,7 @@
 
 module Main where
 
-import Lib
+import qualified DB as DB
 import Servant.API
 import Servant.Server
 import GHC.Generics
@@ -19,7 +19,10 @@ import Text.Regex.PCRE
 import qualified Data.ByteString.Char8 as BC
 import qualified Data.ByteString as BS
 import qualified Text.Email.Validate as Email
-
+import Database.PostgreSQL.Simple
+import Control.Monad.Trans.Class
+import Control.Monad.IO.Class
+import ConnectionInfo
 
 type EmailAPI = "getEmailsForUser" :> Capture "email" Email :> Get '[JSON] [Email]
 
@@ -45,10 +48,21 @@ emails1 =
     Email "hamef@gmail.com"
   ]
 
+-- TODO: What if the input email is a valid email but doesn't exist in the database?
+-- TODO: Security: How to prevent people from getting other accounts' emails by spoofing their account's email?
 server1 :: Server EmailAPI
 server1 = emails
   where emails :: Email -> Handler [Email]
-        emails (Email em) = return emails1 -- $ map (\(Email e) -> Email (em ++ e)) emails1
+        emails (Email em) = do
+          (connectHost, connectPort, connectDatabase, connectPassword, connectUser) <- liftIO $ getConnectionInfo
+          conn <- liftIO $ connect ConnectInfo {connectHost="localhost"
+                                               ,connectPort=5432
+                                               ,connectDatabase="trello-reminders-db"
+                                               ,connectPassword="type_your_password_here"
+                                               ,connectUser="postgres"
+                                               }
+          emls <- liftIO $ DB.getEmailsForUser conn em
+          return $ map (\e -> Email e) emls
 
 emailAPI :: Proxy EmailAPI
 emailAPI = Proxy
