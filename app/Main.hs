@@ -27,6 +27,7 @@ import Control.Monad.IO.Class
 import ConnectionInfo as CI
 import Control.Monad.Except (throwError)
 
+-- http://localhost:8081/getEmailsForUser/omefire@gmail.com
 type EmailAPI = "getEmailsForUser" :> Capture "email" Email :> Get '[JSON] [Email]
 
 newtype Email = Email String deriving (Eq, Show, Generic)
