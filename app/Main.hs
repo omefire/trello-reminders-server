@@ -17,12 +17,15 @@ import Data.Proxy
 import qualified Data.Text as T
 import Text.Regex.PCRE
 import qualified Data.ByteString.Char8 as BC
+import qualified Data.ByteString.Lazy.Char8 as BLC
 import qualified Data.ByteString as BS
+import qualified Data.ByteString.Lazy.Internal as BSLI
 import qualified Text.Email.Validate as Email
 import Database.PostgreSQL.Simple
 import Control.Monad.Trans.Class
 import Control.Monad.IO.Class
-import ConnectionInfo
+import ConnectionInfo as CI
+import Control.Monad.Except (throwError)
 
 type EmailAPI = "getEmailsForUser" :> Capture "email" Email :> Get '[JSON] [Email]
 
@@ -36,39 +39,30 @@ instance FromHttpApiData Email where
   parseUrlPiece str | Email.isValid $ BC.pack (T.unpack str) = Right $ Email $ T.unpack str
                     | otherwise         = Left $ T.pack "Invalid email address provided"
 
--- type Email = String
--- instance ToJSON Email
--- https://stackoverflow.com/questions/5941701/why-can-i-not-make-string-an-instance-of-a-typeclass
 
-emails1 :: [Email]
-emails1 =
-  [
-    Email "omef@gmail.com",
-    Email "imef@gmail.com",
-    Email "hamef@gmail.com"
-  ]
-
--- TODO: What if the input email is a valid email but doesn't exist in the database?
 -- TODO: Security: How to prevent people from getting other accounts' emails by spoofing their account's email?
-server1 :: Server EmailAPI
-server1 = emails
+server :: Server EmailAPI
+server = emails
   where emails :: Email -> Handler [Email]
         emails (Email em) = do
-          (connectHost, connectPort, connectDatabase, connectPassword, connectUser) <- liftIO $ getConnectionInfo
-          conn <- liftIO $ connect ConnectInfo {connectHost="localhost"
-                                               ,connectPort=5432
-                                               ,connectDatabase="trello-reminders-db"
-                                               ,connectPassword="type_your_password_here"
-                                               ,connectUser="postgres"
-                                               }
-          emls <- liftIO $ DB.getEmailsForUser conn em
-          return $ map (\e -> Email e) emls
+          eConnInfo <- liftIO $ CI.getConnectionInfo
+          case eConnInfo of
+            Left err -> throwError err505 { errBody = BLC.pack err }
+            Right connInfo -> do
+              conn <- liftIO $ connect ConnectInfo {connectHost = host connInfo
+                                                   ,connectPort = (fromIntegral $ port connInfo)
+                                                   ,connectDatabase = database connInfo
+                                                   ,connectPassword = password connInfo
+                                                   ,connectUser = user connInfo
+                                                   }
+              emls <- liftIO $ DB.getEmailsForUser conn em
+              return $ map (\e -> Email e) emls
 
 emailAPI :: Proxy EmailAPI
 emailAPI = Proxy
 
-app1 :: Application
-app1 = serve emailAPI server1
+app :: Application
+app = serve emailAPI server
 
 main :: IO ()
-main = run 8081 app1
+main = run 8081 app
