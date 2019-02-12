@@ -1,5 +1,4 @@
 .stack-work/
-trello-reminders-server.cabal
 *~
 /database/backup.sql
 backup.sql
