@@ -38,6 +38,12 @@ packages:
 # using the same syntax as the packages field.
 # (e.g., acme-missiles-0.3)
 # extra-deps: []
+extra-deps:
+- datetime-0.3.1@sha256:7e275bd0ce7a2f66445bedfa0006abaf4d41af4c2204c3f8004c17eab5480e74
+- chronos-1.0.4@sha256:d64faf553bd3295b102b74f47b29ba4e89c1f904d2beba50cbea5778088b261d
+- torsor-0.1@sha256:9c6f152650322357bee013a224d9d7ec8e8ae9fe32d8cee45f1431c49b0129e2
+
+
 
 # Override default flag values for local packages and extra-deps
 # flags: {}

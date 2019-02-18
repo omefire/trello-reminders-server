@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 5ec1028a7b4206e10335acdef2cb4a916fdebb0864ee06d0ffcfecd102acbd9e
+-- hash: 0df498eff2646df145dff9442250e0b09b6d2e5027b223c50c54d28e0d32d006
 
 name:           trello-reminders-server
 version:        0.1.0.0
@@ -27,20 +27,32 @@ source-repository head
 
 library
   exposed-modules:
+      ConnectionInfo
       DB
-      , ConnectionInfo
+      Lib
+      Types
   other-modules:
       Paths_trello_reminders_server
   hs-source-dirs:
       src
   build-depends:
-                  base >=4.7 && <5
-                , postgresql-simple
-                , product-profunctors
-                , opaleye
-                , aeson
-                , text
-                , bytestring
+      aeson
+    , base >=4.7 && <5
+    , bytestring
+    , chronos
+    , datetime
+    , email-validate
+    , mtl
+    , opaleye
+    , postgresql-simple
+    , product-profunctors
+    , regex-pcre
+    , servant
+    , servant-server
+    , text
+    , time
+    , transformers
+    , warp
   default-language: Haskell2010
 
 executable trello-reminders-server-exe
@@ -51,20 +63,25 @@ executable trello-reminders-server-exe
       app
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      base >=4.7 && <5
-    , trello-reminders-server
+      aeson
+    , base >=4.7 && <5
+    , bytestring
+    , chronos
+    , datetime
+    , email-validate
+    , mtl
+    , opaleye
+    , postgresql-simple
+    , product-profunctors
+    , regex-pcre
     , servant
-    , wai
-    , warp
-    , aeson
     , servant-server
     , text
-    , regex-pcre
-    , bytestring
-    , email-validate
-    , postgresql-simple
+    , time
     , transformers
-    , mtl 
+    , trello-reminders-server
+    , wai
+    , warp
   default-language: Haskell2010
 
 test-suite trello-reminders-server-test
@@ -76,6 +93,22 @@ test-suite trello-reminders-server-test
       test
   ghc-options: -threaded -rtsopts -with-rtsopts=-N
   build-depends:
-      base >=4.7 && <5
+      aeson
+    , base >=4.7 && <5
+    , bytestring
+    , chronos
+    , datetime
+    , email-validate
+    , mtl
+    , opaleye
+    , postgresql-simple
+    , product-profunctors
+    , regex-pcre
+    , servant
+    , servant-server
+    , text
+    , time
+    , transformers
     , trello-reminders-server
+    , warp
   default-language: Haskell2010

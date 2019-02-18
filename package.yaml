@@ -21,6 +21,22 @@ description:         Please see the README on GitHub at <https://github.com/omef
 
 dependencies:
 - base >= 4.7 && < 5
+- aeson
+- text
+- bytestring
+- opaleye
+- product-profunctors
+- postgresql-simple
+- datetime
+- email-validate
+- servant-server
+- warp
+- regex-pcre
+- transformers
+- mtl
+- servant
+- chronos
+- time
 
 library:
   source-dirs: src
@@ -37,6 +53,8 @@ executables:
     - trello-reminders-server
     - servant
     - wai
+    - aeson
+    - text
 
 tests:
   trello-reminders-server-test:

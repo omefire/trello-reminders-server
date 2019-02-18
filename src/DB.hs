@@ -1,15 +1,19 @@
-{-# LANGUAGE Arrows #-}
+ {-# LANGUAGE Arrows #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE TemplateHaskell #-}
 
-module DB (getEmailsForUser) where
+module DB (getEmailsForUser, createReminder) where
 
 import Opaleye
 import Data.Profunctor.Product (p2)
 import Database.PostgreSQL.Simple
 import Control.Arrow (returnA)
+import qualified Types as Types
+import qualified Chronos as Chronos
+import Data.Time
+import Data.Fixed
 
 type Email = String
 -- type User = String
@@ -63,3 +67,13 @@ getEmailsForUser conn email = runQuery conn $ proc () -> do
   restrict -< (emails_emailID .== usersEmails_emailID)
 
   returnA -< (emails_email)
+
+createReminder :: Connection -> Types.Reminder -> IO Types.Reminder
+createReminder conn rem = do
+  let day = fromGregorian 2019 03  05 -- March 5th, 2019
+  let diffTime = secondsToDiffTime 100
+  return $ Types.Reminder{ Types.reminderName = "ABC",
+                           Types.reminderDescription = "ABC",
+                           Types.reminderDate = UTCTime { utctDay = day, utctDayTime = diffTime }, -- 2014 2 26 17 58 52,
+                           Types.reminderEmails = [Types.Email "omefire@gmail.com", Types.Email "imefire@gmail.com"]
+                         }
