@@ -1,5 +1,3 @@
 .stack-work/
 *~
-/database/backup.sql
-backup.sql
 credentials.json
