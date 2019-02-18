@@ -54,6 +54,23 @@ server = getEmailsForUser :<|> createReminder
               emls <- liftIO $ DB.getEmailsForUser conn em
               return $ map (\e -> Email e) emls
 
+        -- Example JSON body request
+        -- {
+	--  "reminderName": "ABC",
+	--  "reminderDescription": "ABCDESC",
+	--  "reminderDate": "2016-12-09T15:04:26.349857693845+05:00",
+	--  "reminderEmails": ["omefire@gmail.com"]
+        -- }
+        --
+        -- {
+        --  "reminderDate": "2019-03-05T00:01:40Z",
+        --  "reminderEmails": [
+        --    "omefire@gmail.com",
+        --    "imefire@gmail.com"
+        --  ],
+        --  "reminderName": "ABC",
+        --  "reminderDescription": "ABC"
+        -- }
         createReminder :: Reminder -> Handler Reminder
         createReminder rem = do
           eConnInfo <- liftIO $ CI.getConnectionInfo
