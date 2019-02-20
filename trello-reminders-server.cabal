@@ -4,7 +4,7 @@ cabal-version: 1.12
 --
 -- see: https://github.com/sol/hpack
 --
--- hash: 0df498eff2646df145dff9442250e0b09b6d2e5027b223c50c54d28e0d32d006
+-- hash: 558fc4195eaa05f6b147a8fb7cc947e17d45e2fa23fa11af5112b533d74e44f4
 
 name:           trello-reminders-server
 version:        0.1.0.0
@@ -44,6 +44,7 @@ library
     , email-validate
     , mtl
     , opaleye
+    , opaleye-trans
     , postgresql-simple
     , product-profunctors
     , regex-pcre
@@ -71,6 +72,7 @@ executable trello-reminders-server-exe
     , email-validate
     , mtl
     , opaleye
+    , opaleye-trans
     , postgresql-simple
     , product-profunctors
     , regex-pcre
@@ -101,6 +103,7 @@ test-suite trello-reminders-server-test
     , email-validate
     , mtl
     , opaleye
+    , opaleye-trans
     , postgresql-simple
     , product-profunctors
     , regex-pcre

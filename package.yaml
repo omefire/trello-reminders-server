@@ -37,6 +37,7 @@ dependencies:
 - servant
 - chronos
 - time
+- opaleye-trans
 
 library:
   source-dirs: src

@@ -30,9 +30,10 @@ instance FromHttpApiData Email where
 
 
 -- Reminder
-data Reminder = Reminder { reminderName :: String,
+data Reminder = Reminder { reminderId :: Int,
+                           reminderName :: String,
                            reminderDescription :: String,
-                           reminderDate :: UTCTime,
+                           reminderDateTime :: UTCTime,
                            reminderEmails :: [Email]
                          } deriving (Show, Generic)
 
