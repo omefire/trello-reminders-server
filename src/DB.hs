@@ -9,43 +9,17 @@
 module DB (getEmailsForUser, createReminder) where
 
 import Opaleye
-import Data.Profunctor.Product (p2, p4)
--- import Database.PostgreSQL.Simple
 import Control.Arrow (returnA)
 import Types
-import qualified Chronos as Chronos
 import Data.Time
-import Data.Fixed
-
-import Opaleye
 import Opaleye.Trans
-
 import Data.Profunctor.Product.TH (makeAdaptorAndInstance)
-import Data.Maybe
 import qualified Database.PostgreSQL.Simple as PSQL
 import Control.Monad.Trans.Maybe
 
 
--- type Email = String
--- type User = String
+-- DB Models
 
--- data User' a b = User { usID :: a, usEmail :: b }
--- type UserField = User' (Field SqlText) (Field SqlText)
-
-emailTable' :: Table (Field SqlInt4, Field SqlText) (Field SqlInt4, Field SqlText)
-emailTable' = table "Emails" (p2 ( tableField "ID"
-                                , tableField "Email"))
-
-userTable' :: Table (Field SqlInt4, Field SqlText) (Field SqlInt4, Field SqlText)
-userTable' = table "Users" (p2 ( tableField "ID"
-                              , tableField "Email"))
-
-userEmailTable' :: Table (Field SqlInt4, Field SqlInt4) (Field SqlInt4, Field SqlInt4)
-userEmailTable' = table "Users_Emails" (p2 ( tableField "UserID"
-                                          , tableField "EmailID"))
-
-
--- Tables
 data ReminderP i n d dt = ReminderP
   { remID :: i
   , remName :: n
@@ -141,17 +115,17 @@ emailTable = Table "Emails" $ pEmail EmailP
   , emEmail = required "Email"
   }
 
-insertReminder :: Types.Reminder -> Transaction (Maybe Int)
-insertReminder rem = do
+insertReminder :: Reminder -> Transaction (Maybe Int)
+insertReminder r = do
   reminderId <- ( insertReturningFirst reminderTable remID
-                  ( ReminderP Nothing (pgString $ Types.reminderName rem) (pgString $ Types.reminderDescription rem) (pgUTCTime $ Types.reminderDateTime rem) ) ) :: Transaction (Maybe Int)
+                  ( ReminderP Nothing (pgString $ Types.reminderName r) (pgString $ Types.reminderDescription r) (pgUTCTime $ Types.reminderDateTime r) ) ) :: Transaction (Maybe Int)
   case reminderId of
     Nothing -> return Nothing
     Just rId -> return (Just rId)
 
 insertUserReminder :: Int -> Int -> Transaction (Maybe (Int, Int))
 insertUserReminder userId reminderId = do
-  res <- insertReturningFirst userReminderTable (\rem -> (urUserID rem, urReminderID rem))
+  res <- insertReturningFirst userReminderTable (\r -> (urUserID r, urReminderID r))
            ( UserReminderP (pgInt4 userId) (pgInt4 reminderId) )
   case res of
     Nothing -> return Nothing
@@ -173,90 +147,42 @@ insertReminderEmail reminderId emailId = do
     Nothing -> return Nothing
     Just (remId, emId) -> return $ Just (remId, emId)
 
----
-
-userSelect :: Select (Field SqlInt4, Field SqlText)
-userSelect = selectTable userTable'
-
-emailSelect :: Select (Field SqlInt4, Field SqlText)
-emailSelect = selectTable emailTable'
-
-userEmailSelect :: Select (Field SqlInt4, Field SqlInt4)
-userEmailSelect = selectTable userEmailTable'
-
-userAndEmails :: SelectArr (Field SqlText) (Field SqlText)
-userAndEmails = proc email -> do
-  (users_userID, users_userEmail)   <- userSelect -< ()
-  restrict  -< (email .== users_userEmail)
-
-  (usersEmails_userID, usersEmails_emailID) <- userEmailSelect -< ()
-  restrict -< (usersEmails_userID .== users_userID)
-
-  (emails_emailID, emails_email)  <- emailSelect -< ()
-  restrict -< (emails_emailID .== usersEmails_emailID)
-
-  returnA -< (emails_email)
-
 
 -- Top-level functions
 
-selectEmailsForUser :: UserID -> Transaction [ EmailP Int String ]
-selectEmailsForUser (UserID uid) = query $ emailsForUserQuery uid
-  where
-    emailsForUserQuery :: Int -> Query ReadEmail
-    emailsForUserQuery uid = proc() -> do
-      user <- selectTable userTable -< ()
-      restrict -< (uuserID user) .== (pgInt4 uid)
-
-      userEmail <- selectTable userEmailTable -< ()
-      restrict -< ( (ueUserID userEmail) .== (uuserID user) )
-
-      email <- selectTable emailTable -< ()
-      restrict -< (ueEmailID userEmail) .== (emID email)
-
-      returnA -< email
-
 getEmailsForUser :: PSQL.Connection -> UserID -> IO [Email]
--- getEmailsForUser conn uid = return [Email { emailID = 1, emailValue = "" }]
 getEmailsForUser conn userid = do
   emails <- runOpaleyeT conn $ transaction $ selectEmailsForUser userid
-  return $ (flip map) emails $ \(EmailP id val) -> Email { emailID = id, emailValue = val }
+  return $ (flip map) emails $ \(EmailP _id val) -> Email { emailID = _id, emailValue = val }
+    where
+      selectEmailsForUser :: UserID -> Transaction [ EmailP Int String ]
+      selectEmailsForUser (UserID uid) = query $ emailsForUserQuery uid
 
-  -- user <- selectTable userTable -< ()
-  -- restrict -< (uuserID user) .== (pgInt4 $ userID userid)
+      emailsForUserQuery :: Int -> Query ReadEmail
+      emailsForUserQuery uid = proc() -> do
+        user <- selectTable userTable -< ()
+        restrict -< (uuserID user) .== (pgInt4 uid)
 
-  -- userEmail <- selectTable userEmailTable -< ()
-  -- restrict -< ( (ueUserID userEmail) .== (uuserID user) )
+        userEmail <- selectTable userEmailTable -< ()
+        restrict -< ( (ueUserID userEmail) .== (uuserID user) )
 
-  -- email <- selectTable emailTable -< ()
-  -- restrict -< (ueEmailID userEmail) .== (emID email)
+        email <- selectTable emailTable -< ()
+        restrict -< (ueEmailID userEmail) .== (emID email)
 
-  -- returnA -< (Email { emailID = (emID email), emailValue = (emEmail email) })
+        returnA -< email
 
--- Getemailsforuser' :: Connection -> Email -> IO [Email]
--- getEmailsForUser' conn email = runQuery conn $ proc () -> do
---   (users_userID, users_userEmail)   <- userSelect -< ()
---   restrict  -< (sqlString email .== users_userEmail)
-
---   (usersEmails_userID, usersEmails_emailID) <- userEmailSelect -< ()
---   restrict -< (usersEmails_userID .== users_userID)
-
---   (emails_emailID, emails_email)  <- emailSelect -< ()
---   restrict -< (emails_emailID .== usersEmails_emailID)
-
---   returnA -< (emails_email)
 
 -- TODO: Add an entry into each of the tables: Reminders, Users_Reminders & Reminders_Emails
 -- TODO: Make use of DB transactions
 createReminder :: PSQL.Connection -> Types.Reminder -> IO (Maybe Types.Reminder)
-createReminder conn rem = do
+createReminder conn _rem = do
   let day = fromGregorian 2019 03  05 -- March 5th, 2019
   let diffTime = secondsToDiffTime 100
   runOpaleyeT conn $ transaction $ runMaybeT $ do
-    remId <- MaybeT $ insertReminder rem
-    (userId, _) <- MaybeT $ ( ( insertUserReminder (Types.reminderUserID rem) remId ) :: Transaction (Maybe (Int, Int)) )
-    _ <- MaybeT $ ( ( insertUserEmail (Types.reminderUserID rem) remId ) :: Transaction (Maybe (Int, Int)) )
-    let emails = Types.reminderEmails rem
+    remId <- MaybeT $ insertReminder _rem
+    (userId, _) <- MaybeT $ ( ( insertUserReminder (Types.reminderUserID _rem) remId ) :: Transaction (Maybe (Int, Int)) )
+    _ <- MaybeT $ ( ( insertUserEmail (Types.reminderUserID _rem) remId ) :: Transaction (Maybe (Int, Int)) )
+    let emails = Types.reminderEmails _rem
     --(flip map) emails $\e -> do
     --  insertReminderEmail (Types.reminderId rem) ()
 
@@ -267,20 +193,3 @@ createReminder conn rem = do
                              Types.reminderDateTime = UTCTime { utctDay = day, utctDayTime = diffTime },
                              Types.reminderEmails = [Types.Email { Types.emailID = 1, Types.emailValue = "omefire@gmail.com" }]
                            }
-
-
-  -- rId <- runOpaleyeT conn $ transaction $ do
-  --   mRemId <- insertReminder rem
-  --   case mRemId of
-  --     Nothing -> Nothing
-  --     Just remId -> do
-  --       mUserRemIds <- insertUserReminder (reminderUserID rem) remId
-  --       case mUserRemIds of
-  --         Nothing -> Nothing
-  --         Just userRemIds -> do
-  --           return $ Types.Reminder{ Types.reminderId = (fromJust rId),
-  --                                    Types.reminderName = show (fromJust rId),
-  --                                    Types.reminderDescription = "ABC",
-  --                                    Types.reminderDateTime = UTCTime { utctDay = day, utctDayTime = diffTime }, -- 2014 2 26 17 58 52,
-  --                                    Types.reminderEmails = [Types.Email "omefire@gmail.com", Types.Email "imefire@gmail.com"]
-  --                                  }
