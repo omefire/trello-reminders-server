@@ -10,9 +10,9 @@ module DB (getEmailsForUser, createReminder) where
 
 import Opaleye
 import Data.Profunctor.Product (p2, p4)
-import Database.PostgreSQL.Simple
+-- import Database.PostgreSQL.Simple
 import Control.Arrow (returnA)
-import qualified Types as Types
+import Types
 import qualified Chronos as Chronos
 import Data.Time
 import Data.Fixed
@@ -26,18 +26,18 @@ import qualified Database.PostgreSQL.Simple as PSQL
 import Control.Monad.Trans.Maybe
 
 
-type Email = String
+-- type Email = String
 -- type User = String
 
 -- data User' a b = User { usID :: a, usEmail :: b }
 -- type UserField = User' (Field SqlText) (Field SqlText)
 
-emailTable :: Table (Field SqlInt4, Field SqlText) (Field SqlInt4, Field SqlText)
-emailTable = table "Emails" (p2 ( tableField "ID"
+emailTable' :: Table (Field SqlInt4, Field SqlText) (Field SqlInt4, Field SqlText)
+emailTable' = table "Emails" (p2 ( tableField "ID"
                                 , tableField "Email"))
 
-userTable :: Table (Field SqlInt4, Field SqlText) (Field SqlInt4, Field SqlText)
-userTable = table "Users" (p2 ( tableField "ID"
+userTable' :: Table (Field SqlInt4, Field SqlText) (Field SqlInt4, Field SqlText)
+userTable' = table "Users" (p2 ( tableField "ID"
                               , tableField "Email"))
 
 userEmailTable' :: Table (Field SqlInt4, Field SqlInt4) (Field SqlInt4, Field SqlInt4)
@@ -45,27 +45,37 @@ userEmailTable' = table "Users_Emails" (p2 ( tableField "UserID"
                                           , tableField "EmailID"))
 
 
--- Reminders
+-- Tables
 data ReminderP i n d dt = ReminderP
-  { remId :: i
+  { remID :: i
   , remName :: n
   , remDescription :: d
   , remDateTime :: dt
   } deriving (Show, Eq)
 
 data UserReminderP a b = UserReminderP
-  { urUserId :: a
-  , urReminderId :: b
+  { urUserID :: a
+  , urReminderID :: b
   } deriving (Show, Eq)
 
 data UserEmailP a b = UserEmailP
-  { ueUserId :: a
-  , ueReminderId :: b
+  { ueUserID :: a
+  , ueEmailID :: b
   }
 
 data ReminderEmailP a b = ReminderEmailP
-  { reReminderId :: a
-  , reEmailId :: b
+  { reReminderID :: a
+  , reEmailID :: b
+  }
+
+data UserP a b = UserP
+  { uuserID :: a
+  , uuserEmail :: b
+  }
+
+data EmailP a b = EmailP
+  { emID :: a
+  , emEmail :: b
   }
 
 type WriteReminder = ReminderP (Maybe (Column PGInt4)) (Column PGText) (Column PGText) (Column PGTimestamptz)
@@ -80,14 +90,22 @@ type ReadUserEmail = UserEmailP (Column PGInt4) (Column PGInt4)
 type WriteReminderEmail = ReminderEmailP (Column PGInt4) (Column PGInt4)
 type ReadReminderEmail = ReminderEmailP (Column PGInt4) (Column PGInt4)
 
+type WriteUser = UserP (Maybe (Column PGInt4)) (Column PGText)
+type ReadUser = UserP (Column PGInt4) (Column PGText)
+
+type WriteEmail = EmailP (Maybe (Column PGInt4)) (Column PGText)
+type ReadEmail = EmailP (Column PGInt4) (Column PGText)
+
 makeAdaptorAndInstance "pReminder" ''ReminderP
 makeAdaptorAndInstance "pUserReminder" ''UserReminderP
 makeAdaptorAndInstance "pUserEmail" ''UserEmailP
 makeAdaptorAndInstance "pReminderEmail" ''ReminderEmailP
+makeAdaptorAndInstance "pUser" ''UserP
+makeAdaptorAndInstance "pEmail" ''EmailP
 
 reminderTable :: Table (WriteReminder) (ReadReminder)
 reminderTable = Table "Reminders" $ pReminder ReminderP
-  { remId = optional "ID"
+  { remID = optional "ID"
   , remName = required "Name"
   , remDescription = required "Description"
   , remDateTime = required "ReminderDateTime"
@@ -95,33 +113,45 @@ reminderTable = Table "Reminders" $ pReminder ReminderP
 
 userReminderTable :: Table (WriteUserReminder) (ReadUserReminder)
 userReminderTable = Table "Users_Reminders" $ pUserReminder UserReminderP
-  { urUserId = required "UserID"
-  , urReminderId = required "ReminderID"
+  { urUserID = required "UserID"
+  , urReminderID = required "ReminderID"
   }
 
 userEmailTable :: Table (WriteUserEmail) (ReadUserEmail)
 userEmailTable = Table "Users_Emails" $ pUserEmail UserEmailP
-  { ueUserId = required "UserID"
-  , ueReminderId = required "ReminderID"
+  { ueUserID = required "UserID"
+  , ueEmailID = required "EmailID"
   }
 
 reminderEmailTable :: Table (WriteReminderEmail) (ReadReminderEmail)
 reminderEmailTable = Table "Reminders_Emails" $ pReminderEmail ReminderEmailP
-  { reReminderId = required "ReminderID"
-  , reEmailId = required "EmailID"
+  { reReminderID = required "ReminderID"
+  , reEmailID = required "EmailID"
+  }
+
+userTable :: Table (WriteUser) (ReadUser)
+userTable = Table "Users" $ pUser UserP
+  { uuserID = optional "ID"
+  , uuserEmail = required "Email"
+  }
+
+emailTable :: Table (WriteEmail) (ReadEmail)
+emailTable = Table "Emails" $ pEmail EmailP
+  { emID = optional "ID"
+  , emEmail = required "Email"
   }
 
 insertReminder :: Types.Reminder -> Transaction (Maybe Int)
 insertReminder rem = do
-  reminderId <- ( insertReturningFirst reminderTable remId
+  reminderId <- ( insertReturningFirst reminderTable remID
                   ( ReminderP Nothing (pgString $ Types.reminderName rem) (pgString $ Types.reminderDescription rem) (pgUTCTime $ Types.reminderDateTime rem) ) ) :: Transaction (Maybe Int)
   case reminderId of
     Nothing -> return Nothing
     Just rId -> return (Just rId)
 
-insertUserReminder :: (Int, Int) -> Transaction (Maybe (Int, Int))
-insertUserReminder (userId, reminderId) = do
-  res <- insertReturningFirst userReminderTable (\rem -> (urUserId rem, urReminderId rem))
+insertUserReminder :: Int -> Int -> Transaction (Maybe (Int, Int))
+insertUserReminder userId reminderId = do
+  res <- insertReturningFirst userReminderTable (\rem -> (urUserID rem, urReminderID rem))
            ( UserReminderP (pgInt4 userId) (pgInt4 reminderId) )
   case res of
     Nothing -> return Nothing
@@ -129,7 +159,7 @@ insertUserReminder (userId, reminderId) = do
 
 insertUserEmail :: Int -> Int -> Transaction (Maybe (Int, Int))
 insertUserEmail userId reminderId = do
-  res <- insertReturningFirst userEmailTable (\r -> (ueUserId r, ueReminderId r))
+  res <- insertReturningFirst userEmailTable (\r -> (ueUserID r, ueEmailID r))
            ( UserEmailP (pgInt4 userId) (pgInt4 reminderId) )
   case res of
     Nothing -> return Nothing
@@ -137,7 +167,7 @@ insertUserEmail userId reminderId = do
 
 insertReminderEmail :: Int -> Int -> Transaction (Maybe (Int, Int))
 insertReminderEmail reminderId emailId = do
-  res <- insertReturningFirst reminderEmailTable (\r -> (reReminderId r, reEmailId r))
+  res <- insertReturningFirst reminderEmailTable (\r -> (reReminderID r, reEmailID r))
            ( ReminderEmailP (pgInt4 reminderId) (pgInt4 emailId) )
   case res of
     Nothing -> return Nothing
@@ -146,10 +176,10 @@ insertReminderEmail reminderId emailId = do
 ---
 
 userSelect :: Select (Field SqlInt4, Field SqlText)
-userSelect = selectTable userTable
+userSelect = selectTable userTable'
 
 emailSelect :: Select (Field SqlInt4, Field SqlText)
-emailSelect = selectTable emailTable
+emailSelect = selectTable emailTable'
 
 userEmailSelect :: Select (Field SqlInt4, Field SqlInt4)
 userEmailSelect = selectTable userEmailTable'
@@ -170,28 +200,61 @@ userAndEmails = proc email -> do
 
 -- Top-level functions
 
-getEmailsForUser :: Connection -> Email -> IO [Email]
-getEmailsForUser conn email = runQuery conn $ proc () -> do
-  (users_userID, users_userEmail)   <- userSelect -< ()
-  restrict  -< (sqlString email .== users_userEmail)
+selectEmailsForUser :: UserID -> Transaction [ EmailP Int String ]
+selectEmailsForUser (UserID uid) = query $ emailsForUserQuery uid
+  where
+    emailsForUserQuery :: Int -> Query ReadEmail
+    emailsForUserQuery uid = proc() -> do
+      user <- selectTable userTable -< ()
+      restrict -< (uuserID user) .== (pgInt4 uid)
 
-  (usersEmails_userID, usersEmails_emailID) <- userEmailSelect -< ()
-  restrict -< (usersEmails_userID .== users_userID)
+      userEmail <- selectTable userEmailTable -< ()
+      restrict -< ( (ueUserID userEmail) .== (uuserID user) )
 
-  (emails_emailID, emails_email)  <- emailSelect -< ()
-  restrict -< (emails_emailID .== usersEmails_emailID)
+      email <- selectTable emailTable -< ()
+      restrict -< (ueEmailID userEmail) .== (emID email)
 
-  returnA -< (emails_email)
+      returnA -< email
+
+getEmailsForUser :: PSQL.Connection -> UserID -> IO [Email]
+-- getEmailsForUser conn uid = return [Email { emailID = 1, emailValue = "" }]
+getEmailsForUser conn userid = do
+  emails <- runOpaleyeT conn $ transaction $ selectEmailsForUser userid
+  return $ (flip map) emails $ \(EmailP id val) -> Email { emailID = id, emailValue = val }
+
+  -- user <- selectTable userTable -< ()
+  -- restrict -< (uuserID user) .== (pgInt4 $ userID userid)
+
+  -- userEmail <- selectTable userEmailTable -< ()
+  -- restrict -< ( (ueUserID userEmail) .== (uuserID user) )
+
+  -- email <- selectTable emailTable -< ()
+  -- restrict -< (ueEmailID userEmail) .== (emID email)
+
+  -- returnA -< (Email { emailID = (emID email), emailValue = (emEmail email) })
+
+-- Getemailsforuser' :: Connection -> Email -> IO [Email]
+-- getEmailsForUser' conn email = runQuery conn $ proc () -> do
+--   (users_userID, users_userEmail)   <- userSelect -< ()
+--   restrict  -< (sqlString email .== users_userEmail)
+
+--   (usersEmails_userID, usersEmails_emailID) <- userEmailSelect -< ()
+--   restrict -< (usersEmails_userID .== users_userID)
+
+--   (emails_emailID, emails_email)  <- emailSelect -< ()
+--   restrict -< (emails_emailID .== usersEmails_emailID)
+
+--   returnA -< (emails_email)
 
 -- TODO: Add an entry into each of the tables: Reminders, Users_Reminders & Reminders_Emails
 -- TODO: Make use of DB transactions
-createReminder :: Connection -> Types.Reminder -> IO (Maybe Types.Reminder)
+createReminder :: PSQL.Connection -> Types.Reminder -> IO (Maybe Types.Reminder)
 createReminder conn rem = do
   let day = fromGregorian 2019 03  05 -- March 5th, 2019
   let diffTime = secondsToDiffTime 100
   runOpaleyeT conn $ transaction $ runMaybeT $ do
     remId <- MaybeT $ insertReminder rem
-    (userId, _) <- MaybeT $ ( ( insertUserReminder ((Types.reminderUserID rem), remId )) :: Transaction (Maybe (Int, Int)) )
+    (userId, _) <- MaybeT $ ( ( insertUserReminder (Types.reminderUserID rem) remId ) :: Transaction (Maybe (Int, Int)) )
     _ <- MaybeT $ ( ( insertUserEmail (Types.reminderUserID rem) remId ) :: Transaction (Maybe (Int, Int)) )
     let emails = Types.reminderEmails rem
     --(flip map) emails $\e -> do

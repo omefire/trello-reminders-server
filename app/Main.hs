@@ -33,7 +33,7 @@ import Data.String.Interpolate
 
 
 -- http://localhost:8081/getEmailsForUser/omefire@gmail.com
-type EmailAPI = "getEmailsForUser" :> Capture "email" Email :> Get '[JSON] [Email]
+type EmailAPI = "getEmailsForUser" :> Capture "UserID" UserID :> Get '[JSON] [Email]
 type ReminderAPI = "createReminder" :> ReqBody '[JSON] Reminder :> Post '[JSON] (Maybe Reminder)
 
 type API = EmailAPI :<|> ReminderAPI
@@ -42,8 +42,8 @@ type API = EmailAPI :<|> ReminderAPI
 -- TODO: Remove code duplication
 server :: Server API
 server = getEmailsForUser :<|> createReminder
-  where getEmailsForUser :: Email -> Handler [Email]
-        getEmailsForUser (Email em) = do
+  where getEmailsForUser :: UserID -> Handler [Email]
+        getEmailsForUser userid = do
           eConnInfo <- liftIO $ CI.getConnectionInfo
           case eConnInfo of
             Left err -> throwError err505 { errBody = BLC.pack err }
@@ -54,9 +54,10 @@ server = getEmailsForUser :<|> createReminder
                                                    ,connectPassword = password connInfo
                                                    ,connectUser = user connInfo
                                                    }
-              emls <- liftIO $ DB.getEmailsForUser conn em
-              return $ map (\e -> Email e) emls
+              emls <- liftIO $ DB.getEmailsForUser conn userid
+              return  emls
 
+        --
         -- Example JSON body request
         -- {
 	--  "reminderName": "ABC",

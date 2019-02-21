@@ -24,13 +24,6 @@ data Email = Email { emailID :: Int
 instance ToJSON Email
 instance FromJSON Email
 
-instance FromHttpApiData Email where
-  -- parseUrlPiece :: Text -> Either Text Email
-  -- TODO: What happens when the email provided is invalid?
-  parseUrlPiece str | Email.isValid $ BC.pack (T.unpack str) = Right $ Email { emailID = 1, emailValue = T.unpack str }
-                    | otherwise = Left $ T.pack "Invalid email address provided"
-
-
 -- Reminder
 data Reminder = Reminder { reminderID :: Int,
                            reminderName :: String,
@@ -46,3 +39,10 @@ instance FromJSON Reminder
 
 -- User
 newtype UserID = UserID { userID :: Int }
+
+instance FromHttpApiData UserID where
+  -- parseUrlPiece :: Text -> Either Text UserID
+  -- TODO: What happens if the user supplies something like 'abc' that can't be converted to an integer?
+  parseUrlPiece str = do
+    let _id = (read (T.unpack str)) :: Int
+    return $ UserID _id
