@@ -2,6 +2,7 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE QuasiQuotes #-}
 
 module Main where
 
@@ -21,17 +22,19 @@ import qualified Data.ByteString.Lazy.Char8 as BLC
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy.Internal as BSLI
 import qualified Text.Email.Validate as Email
+import qualified Database.PostgreSQL.Simple as PSQL
 import Database.PostgreSQL.Simple
 import Control.Monad.Trans.Class
 import Control.Monad.IO.Class
 import ConnectionInfo as CI
 import Control.Monad.Except (throwError)
 import Types
+import Data.String.Interpolate
 
 
 -- http://localhost:8081/getEmailsForUser/omefire@gmail.com
 type EmailAPI = "getEmailsForUser" :> Capture "email" Email :> Get '[JSON] [Email]
-type ReminderAPI = "createReminder" :> ReqBody '[JSON] Reminder :> Post '[JSON] Reminder
+type ReminderAPI = "createReminder" :> ReqBody '[JSON] Reminder :> Post '[JSON] (Maybe Reminder)
 
 type API = EmailAPI :<|> ReminderAPI
 
@@ -71,7 +74,7 @@ server = getEmailsForUser :<|> createReminder
         --  "reminderName": "ABC",
         --  "reminderDescription": "ABC"
         -- }
-        createReminder :: Reminder -> Handler Reminder
+        createReminder :: Reminder -> Handler (Maybe Reminder)
         createReminder rem = do
           eConnInfo <- liftIO $ CI.getConnectionInfo
           case eConnInfo of
@@ -83,6 +86,8 @@ server = getEmailsForUser :<|> createReminder
                                                    ,connectUser = user connInfo
                                                    ,connectPassword = password connInfo
                                                    }
+              let connString = [i|host='#{host connInfo}' dbname='#{database connInfo}' user='#{user connInfo}' password='#{password connInfo}' port='#{port connInfo}'|]
+              conn <- liftIO $ PSQL.connectPostgreSQL $ BC.pack connString
               reminder <- liftIO $ DB.createReminder conn rem
               return reminder
 

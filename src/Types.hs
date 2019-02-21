@@ -17,7 +17,9 @@ import Data.Time
 
 
 -- Email
-newtype Email = Email String deriving (Eq, Show, Generic)
+data Email = Email { emailID :: Int
+                   , emailValue :: String
+                   } deriving (Eq, Show, Generic)
 
 instance ToJSON Email
 instance FromJSON Email
@@ -25,21 +27,22 @@ instance FromJSON Email
 instance FromHttpApiData Email where
   -- parseUrlPiece :: Text -> Either Text Email
   -- TODO: What happens when the email provided is invalid?
-  parseUrlPiece str | Email.isValid $ BC.pack (T.unpack str) = Right $ Email $ T.unpack str
-                    | otherwise         = Left $ T.pack "Invalid email address provided"
+  parseUrlPiece str | Email.isValid $ BC.pack (T.unpack str) = Right $ Email { emailID = 1, emailValue = T.unpack str }
+                    | otherwise = Left $ T.pack "Invalid email address provided"
 
 
 -- Reminder
-data Reminder = Reminder { reminderId :: Int,
+data Reminder = Reminder { reminderID :: Int,
                            reminderName :: String,
                            reminderDescription :: String,
                            reminderDateTime :: UTCTime,
-                           reminderEmails :: [Email]
+                           reminderEmails :: [Email],
+                           reminderUserID :: Int
                          } deriving (Show, Generic)
 
 instance ToJSON Reminder
 instance FromJSON Reminder
 
--- instance ToJSON Chronos.Datetime
--- instance FromJSON Chronos.Datetime
--- instance Generic Chronos.Datetime
+
+-- User
+newtype UserID = UserID { id :: Int }

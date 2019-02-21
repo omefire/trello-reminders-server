@@ -38,6 +38,7 @@ dependencies:
 - chronos
 - time
 - opaleye-trans
+- interpolate
 
 library:
   source-dirs: src
