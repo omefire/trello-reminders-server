@@ -45,4 +45,4 @@ instance FromJSON Reminder
 
 
 -- User
-newtype UserID = UserID { id :: Int }
+newtype UserID = UserID { userID :: Int }
