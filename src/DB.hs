@@ -16,6 +16,7 @@ import Opaleye.Trans
 import Data.Profunctor.Product.TH (makeAdaptorAndInstance)
 import qualified Database.PostgreSQL.Simple as PSQL
 import Control.Monad.Trans.Maybe
+import Control.Monad.Trans.Class
 
 
 -- DB Models
@@ -171,25 +172,16 @@ getEmailsForUser conn userid = do
 
         returnA -< email
 
-
--- TODO: Add an entry into each of the tables: Reminders, Users_Reminders & Reminders_Emails
--- TODO: Make use of DB transactions
-createReminder :: PSQL.Connection -> Types.Reminder -> IO (Maybe Types.Reminder)
+createReminder :: PSQL.Connection -> Reminder -> IO ( Either String String )
 createReminder conn _rem = do
-  let day = fromGregorian 2019 03  05 -- March 5th, 2019
-  let diffTime = secondsToDiffTime 100
-  runOpaleyeT conn $ transaction $ runMaybeT $ do
+  res <- runOpaleyeT conn $ transaction $ runMaybeT $ do
     remId <- MaybeT $ insertReminder _rem
-    (userId, _) <- MaybeT $ ( ( insertUserReminder (Types.reminderUserID _rem) remId ) :: Transaction (Maybe (Int, Int)) )
-    _ <- MaybeT $ ( ( insertUserEmail (Types.reminderUserID _rem) remId ) :: Transaction (Maybe (Int, Int)) )
-    let emails = Types.reminderEmails _rem
-    --(flip map) emails $\e -> do
-    --  insertReminderEmail (Types.reminderId rem) ()
+    _ <- MaybeT $ ( ( insertUserReminder (reminderUserID _rem) remId ) :: Transaction (Maybe (Int, Int)) )
+    let emails = reminderEmails _rem
+    _ <- lift $ (flip mapM) emails $ \(Email _id _) -> do
+                  insertReminderEmail remId _id
+    return $ "Successfully created the reminder"
 
-    return $ Types.Reminder{ Types.reminderUserID = 1,
-                             Types.reminderID = 1,
-                             Types.reminderName = "ABC",
-                             Types.reminderDescription = "DESC",
-                             Types.reminderDateTime = UTCTime { utctDay = day, utctDayTime = diffTime },
-                             Types.reminderEmails = [Types.Email { Types.emailID = 1, Types.emailValue = "omefire@gmail.com" }]
-                           }
+  case res of
+    Nothing -> return $ Left "An error occured while creating the reminder"
+    Just msg -> return $ Right msg

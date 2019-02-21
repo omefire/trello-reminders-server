@@ -34,7 +34,7 @@ import Data.String.Interpolate
 
 -- http://localhost:8081/getEmailsForUser/omefire@gmail.com
 type EmailAPI = "getEmailsForUser" :> Capture "UserID" UserID :> Get '[JSON] [Email]
-type ReminderAPI = "createReminder" :> ReqBody '[JSON] Reminder :> Post '[JSON] (Maybe Reminder)
+type ReminderAPI = "createReminder" :> ReqBody '[JSON] Reminder :> Post '[JSON] (Either String String)
 
 type API = EmailAPI :<|> ReminderAPI
 
@@ -75,7 +75,7 @@ server = getEmailsForUser :<|> createReminder
         --  "reminderName": "ABC",
         --  "reminderDescription": "ABC"
         -- }
-        createReminder :: Reminder -> Handler (Maybe Reminder)
+        createReminder :: Reminder -> Handler (Either String String)
         createReminder rem = do
           eConnInfo <- liftIO $ CI.getConnectionInfo
           case eConnInfo of
@@ -89,8 +89,8 @@ server = getEmailsForUser :<|> createReminder
                                                    }
               let connString = [i|host='#{host connInfo}' dbname='#{database connInfo}' user='#{user connInfo}' password='#{password connInfo}' port='#{port connInfo}'|]
               conn <- liftIO $ PSQL.connectPostgreSQL $ BC.pack connString
-              reminder <- liftIO $ DB.createReminder conn rem
-              return reminder
+              res <- liftIO $ DB.createReminder conn rem
+              return res
 
 api :: Proxy API
 api = Proxy
