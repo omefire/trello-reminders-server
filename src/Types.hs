@@ -36,9 +36,8 @@ data Reminder = Reminder { reminderID :: Int,
 instance ToJSON Reminder
 instance FromJSON Reminder
 
-
 -- User
-newtype UserID = UserID { userID :: Int }
+newtype UserID = UserID { userID :: Int } deriving (Eq, Show, Generic)
 
 instance FromHttpApiData UserID where
   -- parseUrlPiece :: Text -> Either Text UserID
@@ -46,3 +45,6 @@ instance FromHttpApiData UserID where
   parseUrlPiece str = do
     let _id = (read (T.unpack str)) :: Int
     return $ UserID _id
+
+instance ToJSON UserID
+instance FromJSON UserID

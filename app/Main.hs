@@ -35,13 +35,14 @@ import Data.String.Interpolate
 -- http://localhost:8081/getEmailsForUser/omefire@gmail.com
 type EmailAPI = "getEmailsForUser" :> Capture "UserID" UserID :> Get '[JSON] [Email]
 type ReminderAPI = "createReminder" :> ReqBody '[JSON] Reminder :> Post '[JSON] (Either String String)
+type UserAPI = "getUserIDForEmail" :> Capture "Email" String :> Get '[JSON] (Maybe UserID)
 
-type API = EmailAPI :<|> ReminderAPI
+type API = EmailAPI :<|> ReminderAPI :<|> UserAPI
 
 -- TODO: Security: How to prevent people from getting other accounts' emails by spoofing their account's email?
 -- TODO: Remove code duplication
 server :: Server API
-server = getEmailsForUser :<|> createReminder
+server = getEmailsForUser :<|> createReminder :<|> getUserIDForEmail 
   where getEmailsForUser :: UserID -> Handler [Email]
         getEmailsForUser userid = do
           eConnInfo <- liftIO $ CI.getConnectionInfo
@@ -90,6 +91,23 @@ server = getEmailsForUser :<|> createReminder
               let connString = [i|host='#{host connInfo}' dbname='#{database connInfo}' user='#{user connInfo}' password='#{password connInfo}' port='#{port connInfo}'|]
               conn <- liftIO $ PSQL.connectPostgreSQL $ BC.pack connString
               res <- liftIO $ DB.createReminder conn rem
+              return res
+
+        getUserIDForEmail :: String -> Handler (Maybe UserID)
+        getUserIDForEmail email = do
+          eConnInfo <- liftIO $ CI.getConnectionInfo
+          case eConnInfo of
+            Left err -> throwError err505 { errBody = BLC.pack err }
+            Right connInfo -> do
+              conn <- liftIO $ connect ConnectInfo {connectHost = host connInfo
+                                                   ,connectPort = (fromIntegral $ port connInfo)
+                                                   ,connectDatabase = database connInfo
+                                                   ,connectUser = user connInfo
+                                                   ,connectPassword = password connInfo
+                                                   }
+              let connString = [i|host='#{host connInfo}' dbname='#{database connInfo}' user='#{user connInfo}' password='#{password connInfo}' port='#{port connInfo}'|]
+              conn <- liftIO $ PSQL.connectPostgreSQL $ BC.pack connString
+              res <- liftIO $ DB.getUserIDForEmail conn email
               return res
 
 api :: Proxy API

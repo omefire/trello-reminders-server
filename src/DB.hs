@@ -6,7 +6,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 
-module DB (getEmailsForUser, createReminder) where
+module DB (getEmailsForUser, createReminder, getUserIDForEmail) where
 
 import Opaleye
 import Control.Arrow (returnA)
@@ -185,3 +185,20 @@ createReminder conn _rem = do
   case res of
     Nothing -> return $ Left "An error occured while creating the reminder"
     Just msg -> return $ Right msg
+
+
+getUserIDForEmail :: PSQL.Connection -> String -> IO (Maybe UserID)
+getUserIDForEmail conn email = do
+  res <- runOpaleyeT conn $ transaction $ selectUserIDForEmail
+  case res of
+    Nothing -> return Nothing
+    Just user -> return $ Just $ UserID (uuserID user)
+  where
+    selectUserIDForEmail :: Transaction (Maybe (UserP Int String))
+    selectUserIDForEmail = queryFirst $ userIDForEmailQuery
+
+    userIDForEmailQuery :: Query ReadUser
+    userIDForEmailQuery  = proc() -> do
+      user <- selectTable userTable -< ()
+      restrict -< (uuserEmail user) .== (pgString email)
+      returnA -< (user)
