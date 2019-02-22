@@ -207,6 +207,18 @@ COPY public."Emails" ("ID", "Email") FROM stdin;
 --
 
 COPY public."Reminders" ("ID", "Name", "Description", "ReminderDateTime") FROM stdin;
+1	ABC	ABCDESC	2016-12-09 11:04:26.349858+01
+2	ABC	ABCDESC	2016-12-09 11:04:26.349858+01
+3	ABC	ABCDESC	2016-12-09 11:04:26.349858+01
+4	ABC	ABCDESC	2016-12-09 11:04:26.349858+01
+6	ABC	ABCDESC	2016-12-09 11:04:26.349858+01
+7	ABC	ABCDESC	2016-12-09 11:04:26.349858+01
+9	ABC	ABCDESC	2016-12-09 11:04:26.349858+01
+10	ABC	ABCDESC	2016-12-09 11:04:26.349858+01
+11	ABC	ABCDESC	2016-12-09 11:04:26.349858+01
+16	ABC	ABCDESC	2016-12-09 11:04:26.349858+01
+17	ABC	ABCDESC	2016-12-09 11:04:26.349858+01
+18	ree	ABCDESC	2016-12-09 11:04:26.349858+01
 \.
 
 
@@ -215,6 +227,9 @@ COPY public."Reminders" ("ID", "Name", "Description", "ReminderDateTime") FROM s
 --
 
 COPY public."Reminders_Emails" ("ReminderID", "EmailID") FROM stdin;
+16	1
+17	1
+18	1
 \.
 
 
@@ -247,6 +262,14 @@ COPY public."Users_Emails" ("UserID", "EmailID") FROM stdin;
 --
 
 COPY public."Users_Reminders" ("UserID", "ReminderID") FROM stdin;
+1	6
+1	7
+1	9
+1	10
+1	11
+1	16
+1	17
+1	18
 \.
 
 
@@ -268,7 +291,7 @@ SELECT pg_catalog.setval('public.reminders_id_seq', 1, false);
 -- Name: reminders_id_seq1; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.reminders_id_seq1', 1, false);
+SELECT pg_catalog.setval('public.reminders_id_seq1', 18, true);
 
 
 --
