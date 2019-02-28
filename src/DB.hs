@@ -172,7 +172,7 @@ getEmailsForUser conn userid = do
 
         returnA -< email
 
-createReminder :: PSQL.Connection -> Reminder -> IO ( Either String String )
+createReminder :: PSQL.Connection -> Reminder -> IO ( Either String Int )
 createReminder conn _rem = do
   res <- runOpaleyeT conn $ transaction $ runMaybeT $ do
     remId <- MaybeT $ insertReminder _rem
@@ -180,11 +180,12 @@ createReminder conn _rem = do
     let emails = reminderEmails _rem
     _ <- lift $ (flip mapM) emails $ \(Email _id _) -> do
                   insertReminderEmail remId _id
-    return $ "Successfully created the reminder"
+    -- return $ "Successfully created the reminder"
+    return remId
 
   case res of
     Nothing -> return $ Left "An error occured while creating the reminder"
-    Just msg -> return $ Right msg
+    Just remId -> return $ Right remId
 
 
 getUserIDForEmail :: PSQL.Connection -> String -> IO (Maybe UserID)

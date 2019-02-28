@@ -34,7 +34,7 @@ import Data.String.Interpolate
 
 -- http://localhost:8081/getEmailsForUser/omefire@gmail.com
 type EmailAPI = "getEmailsForUser" :> Capture "UserID" UserID :> Get '[JSON] [Email]
-type ReminderAPI = "createReminder" :> ReqBody '[JSON] Reminder :> Post '[JSON] (Either String String)
+type ReminderAPI = "createReminder" :> ReqBody '[JSON] Reminder :> Post '[JSON] Int
 type UserAPI = "getUserIDForEmail" :> Capture "Email" String :> Get '[JSON] (Maybe UserID)
 
 type API = EmailAPI :<|> ReminderAPI :<|> UserAPI
@@ -42,7 +42,7 @@ type API = EmailAPI :<|> ReminderAPI :<|> UserAPI
 -- TODO: Security: How to prevent people from getting other accounts' emails by spoofing their account's email?
 -- TODO: Remove code duplication
 server :: Server API
-server = getEmailsForUser :<|> createReminder :<|> getUserIDForEmail 
+server = getEmailsForUser :<|> createReminder :<|> getUserIDForEmail
   where getEmailsForUser :: UserID -> Handler [Email]
         getEmailsForUser userid = do
           eConnInfo <- liftIO $ CI.getConnectionInfo
@@ -68,7 +68,7 @@ server = getEmailsForUser :<|> createReminder :<|> getUserIDForEmail
 	--  "reminderEmails": [ { "emailID": 1, "emailValue": "omefire@gmail.com"}],
 	--  "reminderUserID": 1
         -- }
-        createReminder :: Reminder -> Handler (Either String String)
+        createReminder :: Reminder -> Handler Int
         createReminder rem = do
           eConnInfo <- liftIO $ CI.getConnectionInfo
           case eConnInfo of
@@ -83,7 +83,9 @@ server = getEmailsForUser :<|> createReminder :<|> getUserIDForEmail
               let connString = [i|host='#{host connInfo}' dbname='#{database connInfo}' user='#{user connInfo}' password='#{password connInfo}' port='#{port connInfo}'|]
               conn <- liftIO $ PSQL.connectPostgreSQL $ BC.pack connString
               res <- liftIO $ DB.createReminder conn rem
-              return res
+              case res of
+                Left err -> throwError err505 { errBody = BLC.pack err }
+                Right id -> return id
 
         getUserIDForEmail :: String -> Handler (Maybe UserID)
         getUserIDForEmail email = do
