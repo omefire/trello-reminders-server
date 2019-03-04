@@ -30,6 +30,7 @@ import ConnectionInfo as CI
 import Control.Monad.Except (throwError)
 import Types
 import Data.String.Interpolate
+import Control.Concurrent
 
 
 -- http://localhost:8081/getEmailsForUser/omefire@gmail.com
@@ -82,6 +83,10 @@ server = getEmailsForUser :<|> createReminder :<|> getUserIDForEmail
                                                    }
               let connString = [i|host='#{host connInfo}' dbname='#{database connInfo}' user='#{user connInfo}' password='#{password connInfo}' port='#{port connInfo}'|]
               conn <- liftIO $ PSQL.connectPostgreSQL $ BC.pack connString
+
+              -- Use the below to simulate this API call taking too long to complete
+              -- _ <- liftIO $ threadDelay 5000000
+
               res <- liftIO $ DB.createReminder conn rem
               case res of
                 Left err -> throwError err505 { errBody = BLC.pack err }
