@@ -31,6 +31,7 @@ import Control.Monad.Except (throwError)
 import Types
 import Data.String.Interpolate
 import Control.Concurrent
+import Servant.Server.StaticFiles
 
 
 -- http://localhost:8081/getEmailsForUser/omefire@gmail.com
@@ -39,8 +40,13 @@ type ReminderAPI = "createReminder" :> ReqBody '[JSON] Reminder :> Post '[JSON] 
 type UserAPI = "getUserIDForEmail" :> Capture "Email" String :> Get '[JSON] (Maybe UserID)
 type TrelloTokenAPI = "setTrelloToken" :> ReqBody '[JSON] TrelloToken :> Post '[JSON] (String, String)
                  :<|> "getTrelloToken" :> Capture "TrelloID" String :> Get '[JSON] String
+type StaticAPI = "static" :> Raw
 
 type API = EmailAPI :<|> ReminderAPI :<|> UserAPI :<|> TrelloTokenAPI
+type NewAPI = API :<|> "static" :> Raw
+
+newServer :: Server NewAPI
+newServer = server :<|> serveDirectoryWebApp "static-files"
 
 -- TODO: Security: How to prevent people from getting other accounts' emails by spoofing their account's email?
 -- TODO: Remove code duplication
@@ -149,11 +155,11 @@ server = getEmailsForUser :<|> createReminder :<|> getUserIDForEmail :<|> setTre
                 Nothing -> throwError err505 { errBody = BLC.pack $ "No token found for trello id: " <> trelloID }
                 Just tok -> return tok
 
-api :: Proxy API
+api :: Proxy NewAPI
 api = Proxy
 
 app :: Application
-app = serve api server
+app = serve api newServer
 
 main :: IO ()
 main = run 8081 app
