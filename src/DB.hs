@@ -6,7 +6,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 
-module DB (getEmailsForUser, createReminder, getUserIDForEmail) where
+module DB (getEmailsForUser, createReminder, getUserIDForEmail, setTrelloToken) where
 
 import Opaleye
 import Control.Arrow (returnA)
@@ -53,6 +53,11 @@ data EmailP a b = EmailP
   , emEmail :: b
   }
 
+data TokenP a b = TokenP
+  { tokTrelloID :: a
+  , tokToken :: b
+  }
+
 type WriteReminder = ReminderP (Maybe (Column PGInt4)) (Column PGText) (Column PGText) (Column PGTimestamptz)
 type ReadReminder = ReminderP (Column PGInt4) (Column PGText) (Column PGText) (Column PGTimestamptz)
 
@@ -71,12 +76,16 @@ type ReadUser = UserP (Column PGInt4) (Column PGText)
 type WriteEmail = EmailP (Maybe (Column PGInt4)) (Column PGText)
 type ReadEmail = EmailP (Column PGInt4) (Column PGText)
 
+type WriteToken = TokenP (Column PGText) (Column PGText)
+type ReadToken = TokenP (Column PGText) (Column PGText)
+
 makeAdaptorAndInstance "pReminder" ''ReminderP
 makeAdaptorAndInstance "pUserReminder" ''UserReminderP
 makeAdaptorAndInstance "pUserEmail" ''UserEmailP
 makeAdaptorAndInstance "pReminderEmail" ''ReminderEmailP
 makeAdaptorAndInstance "pUser" ''UserP
 makeAdaptorAndInstance "pEmail" ''EmailP
+makeAdaptorAndInstance "pToken" ''TokenP
 
 reminderTable :: Table (WriteReminder) (ReadReminder)
 reminderTable = Table "Reminders" $ pReminder ReminderP
@@ -116,6 +125,12 @@ emailTable = Table "Emails" $ pEmail EmailP
   , emEmail = required "Email"
   }
 
+tokenTable :: Table (WriteToken) (ReadToken)
+tokenTable = Table "Tokens" $ pToken TokenP
+  { tokTrelloID = required "TrelloID"
+  , tokToken = required "Token"
+  }
+
 insertReminder :: Reminder -> Transaction (Maybe Int)
 insertReminder r = do
   reminderId <- ( insertReturningFirst reminderTable remID
@@ -148,6 +163,11 @@ insertReminderEmail reminderId emailId = do
     Nothing -> return Nothing
     Just (remId, emId) -> return $ Just (remId, emId)
 
+insertToken :: String -> String -> Transaction (Maybe (String, String))
+insertToken trelloId token = do
+  res <- insertReturningFirst tokenTable (\r -> (tokTrelloID r, tokToken r))
+           ( TokenP (pgString trelloId) (pgString token) )
+  return res
 
 -- Top-level functions
 
@@ -203,3 +223,10 @@ getUserIDForEmail conn email = do
       user <- selectTable userTable -< ()
       restrict -< (uuserEmail user) .== (pgString email)
       returnA -< (user)
+
+setTrelloToken :: PSQL.Connection -> TrelloToken -> IO (Either String (String, String))
+setTrelloToken conn token = do
+  res <- runOpaleyeT conn $ transaction $ insertToken (trelloID token) (trelloToken token)
+  case res of
+    Nothing -> return $ Left "An error occured while inserting the token"
+    Just r -> return $ Right r

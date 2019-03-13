@@ -48,3 +48,10 @@ instance FromHttpApiData UserID where
 
 instance ToJSON UserID
 instance FromJSON UserID
+
+-- TrelloToken
+data TrelloToken = TrelloToken { trelloID :: String,
+                                 trelloToken :: String
+                               } deriving (Show, Generic)
+instance ToJSON TrelloToken
+instance FromJSON TrelloToken

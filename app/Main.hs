@@ -37,13 +37,14 @@ import Control.Concurrent
 type EmailAPI = "getEmailsForUser" :> Capture "UserID" UserID :> Get '[JSON] [Email]
 type ReminderAPI = "createReminder" :> ReqBody '[JSON] Reminder :> Post '[JSON] Int
 type UserAPI = "getUserIDForEmail" :> Capture "Email" String :> Get '[JSON] (Maybe UserID)
+type TrelloTokenAPI = "setTrelloToken" :> ReqBody '[JSON] TrelloToken :> Post '[JSON] (String, String)
 
-type API = EmailAPI :<|> ReminderAPI :<|> UserAPI
+type API = EmailAPI :<|> ReminderAPI :<|> UserAPI :<|> TrelloTokenAPI
 
 -- TODO: Security: How to prevent people from getting other accounts' emails by spoofing their account's email?
 -- TODO: Remove code duplication
 server :: Server API
-server = getEmailsForUser :<|> createReminder :<|> getUserIDForEmail
+server = getEmailsForUser :<|> createReminder :<|> getUserIDForEmail :<|> setTrelloToken
   where getEmailsForUser :: UserID -> Handler [Email]
         getEmailsForUser userid = do
           eConnInfo <- liftIO $ CI.getConnectionInfo
@@ -108,6 +109,25 @@ server = getEmailsForUser :<|> createReminder :<|> getUserIDForEmail
               conn <- liftIO $ PSQL.connectPostgreSQL $ BC.pack connString
               res <- liftIO $ DB.getUserIDForEmail conn email
               return res
+
+        setTrelloToken :: TrelloToken -> Handler (String, String)
+        setTrelloToken token = do
+          eConnInfo <- liftIO $ CI.getConnectionInfo
+          case eConnInfo of
+            Left err -> throwError err505 { errBody = BLC.pack err }
+            Right connInfo -> do
+              conn <- liftIO $ connect ConnectInfo {connectHost = host connInfo
+                                                   ,connectPort = (fromIntegral $ port connInfo)
+                                                   ,connectDatabase = database connInfo
+                                                   ,connectUser = user connInfo
+                                                   ,connectPassword = password connInfo
+                                                   }
+              let connString = [i|host='#{host connInfo}' dbname='#{database connInfo}' user='#{user connInfo}' password='#{password connInfo}' port='#{port connInfo}'|]
+              conn <- liftIO $ PSQL.connectPostgreSQL $ BC.pack connString
+              res <- liftIO $ DB.setTrelloToken conn token
+              case res of
+                Left err -> throwError err505 { errBody = BLC.pack err }
+                Right r -> return r
 
 api :: Proxy API
 api = Proxy
