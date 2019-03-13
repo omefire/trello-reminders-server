@@ -6,7 +6,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 
-module DB (getEmailsForUser, createReminder, getUserIDForEmail, setTrelloToken) where
+module DB (getEmailsForUser, createReminder, getUserIDForEmail, setTrelloToken, getTrelloToken) where
 
 import Opaleye
 import Control.Arrow (returnA)
@@ -230,3 +230,20 @@ setTrelloToken conn token = do
   case res of
     Nothing -> return $ Left "An error occured while inserting the token"
     Just r -> return $ Right r
+
+
+getTrelloToken :: PSQL.Connection -> String -> IO (Maybe String)
+getTrelloToken conn trelloID = do
+  res <- runOpaleyeT conn $ transaction $ selectTrelloToken
+  case res of
+    Nothing -> return Nothing
+    Just tok -> return $ Just $ (tokToken tok)
+  where
+    selectTrelloToken :: Transaction (Maybe (TokenP String String))
+    selectTrelloToken = queryFirst $ trelloTokenQuery
+
+    trelloTokenQuery :: Query ReadToken
+    trelloTokenQuery = proc() -> do
+      token <- selectTable tokenTable -< ()
+      restrict -< (pgString trelloID) .== ((tokTrelloID token))
+      returnA -< (token)
