@@ -21,12 +21,14 @@ ALTER TABLE ONLY public."Reminders_Emails" DROP CONSTRAINT reminders_emails_remi
 ALTER TABLE ONLY public."Reminders_Emails" DROP CONSTRAINT reminders_emails_emailid_fkey;
 ALTER TABLE ONLY public."Users_Emails" DROP CONSTRAINT "Users_Emails_UserID_fkey";
 ALTER TABLE ONLY public."Users_Emails" DROP CONSTRAINT "Users_Emails_EmailID_fkey";
+DROP INDEX public.reminderdatetime_idx;
 ALTER TABLE ONLY public."Users_Reminders" DROP CONSTRAINT users_reminders_pkey;
 ALTER TABLE ONLY public."Reminders" DROP CONSTRAINT reminders_pkey;
 ALTER TABLE ONLY public."Reminders_Emails" DROP CONSTRAINT reminders_emails_pkey;
 ALTER TABLE ONLY public."Users" DROP CONSTRAINT "Users_pkey";
 ALTER TABLE ONLY public."Users_Emails" DROP CONSTRAINT "Users_Emails_pkey";
 ALTER TABLE ONLY public."Users" DROP CONSTRAINT "Users_Email_key";
+ALTER TABLE ONLY public."Tokens" DROP CONSTRAINT "Tokens_pkey";
 ALTER TABLE ONLY public."Emails" DROP CONSTRAINT "Emails_pkey";
 ALTER TABLE ONLY public."Emails" DROP CONSTRAINT "Emails_Email_key";
 ALTER TABLE public."Reminders" ALTER COLUMN "ID" DROP DEFAULT;
@@ -36,6 +38,7 @@ DROP TABLE public."Users_Reminders";
 DROP TABLE public."Users_Emails";
 DROP TABLE public."Users";
 DROP SEQUENCE public.user_id_seq;
+DROP TABLE public."Tokens";
 DROP TABLE public."Reminders_Emails";
 DROP TABLE public."Reminders";
 DROP TABLE public."Emails";
@@ -78,7 +81,7 @@ CREATE TABLE public."Reminders" (
     "ID" integer NOT NULL,
     "Name" character varying(100) NOT NULL,
     "Description" text NOT NULL,
-    "ReminderDateTime" timestamp with time zone NOT NULL
+    "ReminderDateTime" timestamp without time zone NOT NULL
 );
 
 
@@ -95,6 +98,18 @@ CREATE TABLE public."Reminders_Emails" (
 
 
 ALTER TABLE public."Reminders_Emails" OWNER TO postgres;
+
+--
+-- Name: Tokens; Type: TABLE; Schema: public; Owner: postgres
+--
+
+CREATE TABLE public."Tokens" (
+    "TrelloID" character varying NOT NULL,
+    "Token" character varying NOT NULL
+);
+
+
+ALTER TABLE public."Tokens" OWNER TO postgres;
 
 --
 -- Name: user_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
@@ -207,18 +222,71 @@ COPY public."Emails" ("ID", "Email") FROM stdin;
 --
 
 COPY public."Reminders" ("ID", "Name", "Description", "ReminderDateTime") FROM stdin;
-1	ABC	ABCDESC	2016-12-09 11:04:26.349858+01
-2	ABC	ABCDESC	2016-12-09 11:04:26.349858+01
-3	ABC	ABCDESC	2016-12-09 11:04:26.349858+01
-4	ABC	ABCDESC	2016-12-09 11:04:26.349858+01
-6	ABC	ABCDESC	2016-12-09 11:04:26.349858+01
-7	ABC	ABCDESC	2016-12-09 11:04:26.349858+01
-9	ABC	ABCDESC	2016-12-09 11:04:26.349858+01
-10	ABC	ABCDESC	2016-12-09 11:04:26.349858+01
-11	ABC	ABCDESC	2016-12-09 11:04:26.349858+01
-16	ABC	ABCDESC	2016-12-09 11:04:26.349858+01
-17	ABC	ABCDESC	2016-12-09 11:04:26.349858+01
-18	ree	ABCDESC	2016-12-09 11:04:26.349858+01
+3	ABC	ABCDESC	2016-12-09 10:04:26.349858
+4	ABC	ABCDESC	2016-12-09 10:04:26.349858
+6	ABC	ABCDESC	2016-12-09 10:04:26.349858
+7	ABC	ABCDESC	2016-12-09 10:04:26.349858
+9	ABC	ABCDESC	2016-12-09 10:04:26.349858
+10	ABC	ABCDESC	2016-12-09 10:04:26.349858
+11	ABC	ABCDESC	2016-12-09 10:04:26.349858
+16	ABC	ABCDESC	2016-12-09 10:04:26.349858
+17	ABC	ABCDESC	2016-12-09 10:04:26.349858
+18	ree	ABCDESC	2016-12-09 10:04:26.349858
+19	ree	ABCDESC	2016-12-09 10:04:26.349858
+20	ree	ABCDESC	2016-12-09 10:04:26.349858
+22	ree	ABCDESC	2016-12-09 10:04:26.349858
+23	ree	ABCDESC	2016-12-09 10:04:26.349858
+24	ree	ABCDESC	2016-12-09 10:04:26.349858
+25	test	testd	2020-12-31 11:59:00
+26	kiliku	testd	2020-12-31 11:59:00
+27	kiliku	testd	2020-12-31 11:59:00
+28	Reminder123	Reminder123	2025-12-31 11:59:00
+29	YKD	YKD	2030-12-01 04:47:00
+30	YKD	YKD	2030-12-01 04:47:00
+31	test	testd	2020-12-31 11:59:00
+32	tk	tkd	2020-03-23 23:01:00
+33	tk	tkd	2020-03-23 23:01:00
+34	er	erd	2020-07-05 09:06:00
+35	ewd	ewd	2020-09-14 23:03:00
+36	wert	wet	2020-12-31 11:59:00
+37	wer	asef	2020-12-31 11:59:00
+38	awert	awet	2020-12-31 11:59:00
+39	awegt	awet	2020-12-31 11:59:00
+40	asdf	asdf	2020-12-31 11:59:00
+41	oiu	oiu	2020-12-31 11:59:00
+42	w4er	3245	2020-08-31 11:57:00
+43	w4er	3245	2020-08-31 11:57:00
+44	ry	erty	2020-12-31 11:59:00
+45	wert	wer	2020-12-31 11:59:00
+46	adsf	asdf	2020-12-31 11:59:00
+47	asdf	asdf	2020-12-31 11:59:00
+48	rh	ewrt	2020-12-31 11:59:00
+49	ert	qwet	2020-12-31 11:59:00
+50	awer	wer	2020-12-31 11:59:00
+51	awer	wer	2020-12-31 11:59:00
+52	awer	wer	2020-12-31 11:59:00
+53	awer	wer	2020-12-31 11:59:00
+54	awer	wer	2020-12-31 11:59:00
+55	eryt34y	34y34y	2020-12-31 11:59:00
+56	ery	aerh	2020-12-31 11:59:00
+57	ery	aerh	2020-12-31 11:59:00
+58	ery	aerh	2020-12-31 11:59:00
+59	ery	aerh	2020-12-31 11:59:00
+60	asdf	asdf	2020-12-31 11:59:00
+61	asdf	asdf	2020-12-31 11:59:00
+62	asdf	asdf	2020-12-31 11:59:00
+63	rty	rty	2020-12-31 11:59:00
+64	rty	rty	2020-12-31 11:59:00
+65	oiu	oiu	2020-12-31 11:58:00
+66	oiu	oiu	2020-12-31 11:58:00
+67	Rikilik	asdf	2020-12-30 23:59:00
+68	asdf	waeg	2020-12-31 11:59:00
+69	TZ	TZ	2019-03-17 07:00:00
+70	Acheter les medicaments de Khayla	Acheter les medicaments de Khayla	2019-03-17 07:00:00
+71	ERR	ERR	2019-03-17 07:00:00
+72	MI	MI	2019-03-18 05:39:00
+2	ABC	ABCDESC	2019-03-19 16:19:26.349858
+1	ABC	ABCDESC	2019-03-19 17:36:26.349858
 \.
 
 
@@ -230,6 +298,80 @@ COPY public."Reminders_Emails" ("ReminderID", "EmailID") FROM stdin;
 16	1
 17	1
 18	1
+19	1
+20	1
+22	1
+23	1
+24	1
+25	1
+26	1
+27	1
+28	1
+28	4
+28	5
+29	4
+29	5
+30	4
+30	5
+31	1
+31	5
+32	1
+32	5
+33	1
+33	5
+34	1
+35	1
+36	1
+37	1
+38	1
+39	1
+40	1
+41	1
+42	1
+43	1
+44	1
+45	1
+46	1
+47	1
+48	5
+49	1
+50	1
+51	1
+52	1
+53	1
+54	1
+55	1
+56	1
+57	1
+58	1
+59	1
+60	4
+61	4
+62	4
+63	1
+64	1
+65	1
+66	1
+67	1
+68	1
+69	1
+70	1
+71	4
+1	1
+\.
+
+
+--
+-- Data for Name: Tokens; Type: TABLE DATA; Schema: public; Owner: postgres
+--
+
+COPY public."Tokens" ("TrelloID", "Token") FROM stdin;
+abc	my-token
+abcd	my-token
+123my_trello_id	aa01de3b944af8b426a981d1cb1a1113cad8ee686f7f315c5d72f0eb8eef9068
+1255my_trello_id	aa01de3b944af8b426a981d1cb1a1113cad8ee686f7f315c5d72f0eb8eef9068
+566fe951e7f0d76ceb789d6e	aa01de3b944af8b426a981d1cb1a1113cad8ee686f7f315c5d72f0eb8eef9068
+5c86631092f28249c6447290	1ccf4919f03a4803b8865e6de4ff756404f03d9836a4bc664fd2f212db4438a1
 \.
 
 
@@ -270,6 +412,58 @@ COPY public."Users_Reminders" ("UserID", "ReminderID") FROM stdin;
 1	16
 1	17
 1	18
+1	19
+1	20
+1	22
+1	23
+1	24
+1	25
+1	26
+1	27
+1	28
+1	29
+1	30
+1	31
+1	32
+1	33
+1	34
+1	35
+1	36
+1	37
+1	38
+1	39
+1	40
+1	41
+1	42
+1	43
+1	44
+1	45
+1	46
+1	47
+1	48
+1	49
+1	50
+1	51
+1	52
+1	53
+1	54
+1	55
+1	56
+1	57
+1	58
+1	59
+1	60
+1	61
+1	62
+1	63
+1	64
+1	65
+1	66
+1	67
+1	68
+1	69
+1	70
+1	71
 \.
 
 
@@ -291,7 +485,7 @@ SELECT pg_catalog.setval('public.reminders_id_seq', 1, false);
 -- Name: reminders_id_seq1; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.reminders_id_seq1', 18, true);
+SELECT pg_catalog.setval('public.reminders_id_seq1', 71, true);
 
 
 --
@@ -315,6 +509,14 @@ ALTER TABLE ONLY public."Emails"
 
 ALTER TABLE ONLY public."Emails"
     ADD CONSTRAINT "Emails_pkey" PRIMARY KEY ("ID");
+
+
+--
+-- Name: Tokens Tokens_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."Tokens"
+    ADD CONSTRAINT "Tokens_pkey" PRIMARY KEY ("TrelloID", "Token");
 
 
 --
@@ -363,6 +565,13 @@ ALTER TABLE ONLY public."Reminders"
 
 ALTER TABLE ONLY public."Users_Reminders"
     ADD CONSTRAINT users_reminders_pkey PRIMARY KEY ("UserID", "ReminderID");
+
+
+--
+-- Name: reminderdatetime_idx; Type: INDEX; Schema: public; Owner: postgres
+--
+
+CREATE INDEX reminderdatetime_idx ON public."Reminders" USING btree ("ReminderDateTime");
 
 
 --
