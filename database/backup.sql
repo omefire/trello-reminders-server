@@ -29,6 +29,7 @@ ALTER TABLE ONLY public."Users" DROP CONSTRAINT "Users_pkey";
 ALTER TABLE ONLY public."Users_Emails" DROP CONSTRAINT "Users_Emails_pkey";
 ALTER TABLE ONLY public."Users" DROP CONSTRAINT "Users_Email_key";
 ALTER TABLE ONLY public."Tokens" DROP CONSTRAINT "Tokens_pkey";
+ALTER TABLE ONLY public."Tokens" DROP CONSTRAINT "Tokens_TrelloID_key";
 ALTER TABLE ONLY public."Emails" DROP CONSTRAINT "Emails_pkey";
 ALTER TABLE ONLY public."Emails" DROP CONSTRAINT "Emails_Email_key";
 ALTER TABLE public."Reminders" ALTER COLUMN "ID" DROP DEFAULT;
@@ -212,9 +213,9 @@ ALTER TABLE ONLY public."Reminders" ALTER COLUMN "ID" SET DEFAULT nextval('publi
 COPY public."Emails" ("ID", "Email") FROM stdin;
 1	omefire@gmail.com
 2	imefire@gmail.com
-3	hamefire@gmail.com
 4	mefired@gmail.com
 5	omefire@yahoo.fr
+3	hamidmefire@gmail.com
 \.
 
 
@@ -223,71 +224,74 @@ COPY public."Emails" ("ID", "Email") FROM stdin;
 --
 
 COPY public."Reminders" ("ID", "Name", "Description", "ReminderDateTime", "Processed") FROM stdin;
-3	ABC	ABCDESC	2016-12-09 10:04:26.349858	f
-4	ABC	ABCDESC	2016-12-09 10:04:26.349858	f
-6	ABC	ABCDESC	2016-12-09 10:04:26.349858	f
-7	ABC	ABCDESC	2016-12-09 10:04:26.349858	f
-9	ABC	ABCDESC	2016-12-09 10:04:26.349858	f
-10	ABC	ABCDESC	2016-12-09 10:04:26.349858	f
-11	ABC	ABCDESC	2016-12-09 10:04:26.349858	f
-16	ABC	ABCDESC	2016-12-09 10:04:26.349858	f
-17	ABC	ABCDESC	2016-12-09 10:04:26.349858	f
-18	ree	ABCDESC	2016-12-09 10:04:26.349858	f
-19	ree	ABCDESC	2016-12-09 10:04:26.349858	f
-20	ree	ABCDESC	2016-12-09 10:04:26.349858	f
-22	ree	ABCDESC	2016-12-09 10:04:26.349858	f
-23	ree	ABCDESC	2016-12-09 10:04:26.349858	f
-24	ree	ABCDESC	2016-12-09 10:04:26.349858	f
-25	test	testd	2020-12-31 11:59:00	f
-26	kiliku	testd	2020-12-31 11:59:00	f
-27	kiliku	testd	2020-12-31 11:59:00	f
-28	Reminder123	Reminder123	2025-12-31 11:59:00	f
-29	YKD	YKD	2030-12-01 04:47:00	f
-30	YKD	YKD	2030-12-01 04:47:00	f
-31	test	testd	2020-12-31 11:59:00	f
-32	tk	tkd	2020-03-23 23:01:00	f
-33	tk	tkd	2020-03-23 23:01:00	f
-34	er	erd	2020-07-05 09:06:00	f
-35	ewd	ewd	2020-09-14 23:03:00	f
-36	wert	wet	2020-12-31 11:59:00	f
-37	wer	asef	2020-12-31 11:59:00	f
-38	awert	awet	2020-12-31 11:59:00	f
-39	awegt	awet	2020-12-31 11:59:00	f
-40	asdf	asdf	2020-12-31 11:59:00	f
-41	oiu	oiu	2020-12-31 11:59:00	f
-42	w4er	3245	2020-08-31 11:57:00	f
-43	w4er	3245	2020-08-31 11:57:00	f
-44	ry	erty	2020-12-31 11:59:00	f
-45	wert	wer	2020-12-31 11:59:00	f
-46	adsf	asdf	2020-12-31 11:59:00	f
-47	asdf	asdf	2020-12-31 11:59:00	f
-48	rh	ewrt	2020-12-31 11:59:00	f
-49	ert	qwet	2020-12-31 11:59:00	f
-50	awer	wer	2020-12-31 11:59:00	f
-51	awer	wer	2020-12-31 11:59:00	f
-52	awer	wer	2020-12-31 11:59:00	f
-53	awer	wer	2020-12-31 11:59:00	f
-54	awer	wer	2020-12-31 11:59:00	f
-55	eryt34y	34y34y	2020-12-31 11:59:00	f
-56	ery	aerh	2020-12-31 11:59:00	f
-57	ery	aerh	2020-12-31 11:59:00	f
-58	ery	aerh	2020-12-31 11:59:00	f
-59	ery	aerh	2020-12-31 11:59:00	f
-60	asdf	asdf	2020-12-31 11:59:00	f
-61	asdf	asdf	2020-12-31 11:59:00	f
-62	asdf	asdf	2020-12-31 11:59:00	f
-63	rty	rty	2020-12-31 11:59:00	f
-64	rty	rty	2020-12-31 11:59:00	f
-65	oiu	oiu	2020-12-31 11:58:00	f
-66	oiu	oiu	2020-12-31 11:58:00	f
-67	Rikilik	asdf	2020-12-30 23:59:00	f
-68	asdf	waeg	2020-12-31 11:59:00	f
-69	TZ	TZ	2019-03-17 07:00:00	f
-70	Acheter les medicaments de Khayla	Acheter les medicaments de Khayla	2019-03-17 07:00:00	f
-71	ERR	ERR	2019-03-17 07:00:00	f
-72	MI	MI	2019-03-18 05:39:00	f
-2	ABC	ABCDESC	2019-03-19 16:19:26.349858	f
-1	ABC	ABCDESC	2019-03-19 17:36:26.349858	f
+6	ABC	ABCDESC	2016-12-09 10:04:26.349858	t
+7	ABC	ABCDESC	2016-12-09 10:04:26.349858	t
+9	ABC	ABCDESC	2016-12-09 10:04:26.349858	t
+10	ABC	ABCDESC	2016-12-09 10:04:26.349858	t
+11	ABC	ABCDESC	2016-12-09 10:04:26.349858	t
+16	ABC	ABCDESC	2016-12-09 10:04:26.349858	t
+17	ABC	ABCDESC	2016-12-09 10:04:26.349858	t
+18	ree	ABCDESC	2016-12-09 10:04:26.349858	t
+19	ree	ABCDESC	2016-12-09 10:04:26.349858	t
+20	ree	ABCDESC	2016-12-09 10:04:26.349858	t
+22	ree	ABCDESC	2016-12-09 10:04:26.349858	t
+23	ree	ABCDESC	2016-12-09 10:04:26.349858	t
+24	ree	ABCDESC	2016-12-09 10:04:26.349858	t
+25	test	testd	2020-12-31 11:59:00	t
+26	kiliku	testd	2020-12-31 11:59:00	t
+27	kiliku	testd	2020-12-31 11:59:00	t
+28	Reminder123	Reminder123	2025-12-31 11:59:00	t
+29	YKD	YKD	2030-12-01 04:47:00	t
+30	YKD	YKD	2030-12-01 04:47:00	t
+31	test	testd	2020-12-31 11:59:00	t
+32	tk	tkd	2020-03-23 23:01:00	t
+33	tk	tkd	2020-03-23 23:01:00	t
+34	er	erd	2020-07-05 09:06:00	t
+35	ewd	ewd	2020-09-14 23:03:00	t
+36	wert	wet	2020-12-31 11:59:00	t
+37	wer	asef	2020-12-31 11:59:00	t
+38	awert	awet	2020-12-31 11:59:00	t
+39	awegt	awet	2020-12-31 11:59:00	t
+40	asdf	asdf	2020-12-31 11:59:00	t
+41	oiu	oiu	2020-12-31 11:59:00	t
+42	w4er	3245	2020-08-31 11:57:00	t
+43	w4er	3245	2020-08-31 11:57:00	t
+44	ry	erty	2020-12-31 11:59:00	t
+45	wert	wer	2020-12-31 11:59:00	t
+46	adsf	asdf	2020-12-31 11:59:00	t
+47	asdf	asdf	2020-12-31 11:59:00	t
+48	rh	ewrt	2020-12-31 11:59:00	t
+49	ert	qwet	2020-12-31 11:59:00	t
+50	awer	wer	2020-12-31 11:59:00	t
+51	awer	wer	2020-12-31 11:59:00	t
+52	awer	wer	2020-12-31 11:59:00	t
+53	awer	wer	2020-12-31 11:59:00	t
+54	awer	wer	2020-12-31 11:59:00	t
+55	eryt34y	34y34y	2020-12-31 11:59:00	t
+56	ery	aerh	2020-12-31 11:59:00	t
+57	ery	aerh	2020-12-31 11:59:00	t
+58	ery	aerh	2020-12-31 11:59:00	t
+59	ery	aerh	2020-12-31 11:59:00	t
+60	asdf	asdf	2020-12-31 11:59:00	t
+61	asdf	asdf	2020-12-31 11:59:00	t
+62	asdf	asdf	2020-12-31 11:59:00	t
+63	rty	rty	2020-12-31 11:59:00	t
+64	rty	rty	2020-12-31 11:59:00	t
+65	oiu	oiu	2020-12-31 11:58:00	t
+66	oiu	oiu	2020-12-31 11:58:00	t
+67	Rikilik	asdf	2020-12-30 23:59:00	t
+68	asdf	waeg	2020-12-31 11:59:00	t
+69	TZ	TZ	2019-03-17 07:00:00	t
+70	Acheter les medicaments de Khayla	Acheter les medicaments de Khayla	2019-03-17 07:00:00	t
+71	ERR	ERR	2019-03-17 07:00:00	t
+2	ABC	ABCDESC	2019-03-19 16:19:26.349858	t
+1	ABC	ABCDESC	2019-03-27 08:09:26.349858	t
+4	ABC	ABCDESC	2016-12-09 10:04:26.349858	t
+72	MI	MI	2019-03-29 10:58:00	f
+3	Brainstorm SEO ideas for Trello Reminders	Get the team together to brainstorm ideas on how to successfully run an SEO campaign and therefore improve our results on Google search for target keywords [Trello reminders, Trello notifications, etc....]	2019-03-29 10:50:00	t
+73	FOX	FOX TEST	2016-12-09 15:04:26.349858	f
+74	FOX	FOX TEST	2016-12-09 15:04:26.349858	f
+75	FOXY	FOX TEST	2016-12-09 15:04:26.349858	f
 \.
 
 
@@ -359,6 +363,12 @@ COPY public."Reminders_Emails" ("ReminderID", "EmailID") FROM stdin;
 70	1
 71	4
 1	1
+3	1
+4	1
+3	3
+73	3
+74	3
+75	4
 \.
 
 
@@ -373,6 +383,8 @@ abcd	my-token
 1255my_trello_id	aa01de3b944af8b426a981d1cb1a1113cad8ee686f7f315c5d72f0eb8eef9068
 566fe951e7f0d76ceb789d6e	aa01de3b944af8b426a981d1cb1a1113cad8ee686f7f315c5d72f0eb8eef9068
 5c86631092f28249c6447290	1ccf4919f03a4803b8865e6de4ff756404f03d9836a4bc664fd2f212db4438a1
+efg	aa01de3b944af8b426a981d1cb1a1113cad8ee686f7f315c5d72f0eb8eef9068
+efgf	efghijklmnopqrstuvw
 \.
 
 
@@ -465,6 +477,9 @@ COPY public."Users_Reminders" ("UserID", "ReminderID") FROM stdin;
 1	69
 1	70
 1	71
+1	73
+1	74
+2	75
 \.
 
 
@@ -486,7 +501,7 @@ SELECT pg_catalog.setval('public.reminders_id_seq', 1, false);
 -- Name: reminders_id_seq1; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.reminders_id_seq1', 71, true);
+SELECT pg_catalog.setval('public.reminders_id_seq1', 75, true);
 
 
 --
@@ -510,6 +525,14 @@ ALTER TABLE ONLY public."Emails"
 
 ALTER TABLE ONLY public."Emails"
     ADD CONSTRAINT "Emails_pkey" PRIMARY KEY ("ID");
+
+
+--
+-- Name: Tokens Tokens_TrelloID_key; Type: CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public."Tokens"
+    ADD CONSTRAINT "Tokens_TrelloID_key" UNIQUE ("TrelloID");
 
 
 --
