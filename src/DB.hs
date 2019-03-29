@@ -21,11 +21,12 @@ import Control.Monad.Trans.Class
 
 -- DB Models
 
-data ReminderP i n d dt = ReminderP
+data ReminderP i n d dt p = ReminderP
   { remID :: i
   , remName :: n
   , remDescription :: d
   , remDateTime :: dt
+  , remProcessed :: p
   } deriving (Show, Eq)
 
 data UserReminderP a b = UserReminderP
@@ -58,8 +59,8 @@ data TokenP a b = TokenP
   , tokToken :: b
   }
 
-type WriteReminder = ReminderP (Maybe (Column PGInt4)) (Column PGText) (Column PGText) (Column PGTimestamptz)
-type ReadReminder = ReminderP (Column PGInt4) (Column PGText) (Column PGText) (Column PGTimestamptz)
+type WriteReminder = ReminderP (Maybe (Column PGInt4)) (Column PGText) (Column PGText) (Column PGTimestamp) (Column PGBool)
+type ReadReminder = ReminderP (Column PGInt4) (Column PGText) (Column PGText) (Column PGTimestamp) (Column PGBool)
 
 type WriteUserReminder = UserReminderP (Column PGInt4) (Column PGInt4)
 type ReadUserReminder = UserReminderP (Column PGInt4) (Column PGInt4)
@@ -93,6 +94,7 @@ reminderTable = Table "Reminders" $ pReminder ReminderP
   , remName = required "Name"
   , remDescription = required "Description"
   , remDateTime = required "ReminderDateTime"
+  , remProcessed = required "Processed"
   }
 
 userReminderTable :: Table (WriteUserReminder) (ReadUserReminder)
@@ -134,7 +136,7 @@ tokenTable = Table "Tokens" $ pToken TokenP
 insertReminder :: Reminder -> Transaction (Maybe Int)
 insertReminder r = do
   reminderId <- ( insertReturningFirst reminderTable remID
-                  ( ReminderP Nothing (pgString $ Types.reminderName r) (pgString $ Types.reminderDescription r) (pgUTCTime $ Types.reminderDateTime r) ) ) :: Transaction (Maybe Int)
+                  ( ReminderP Nothing (pgString $ Types.reminderName r) (pgString $ Types.reminderDescription r) (pgLocalTime $ Types.reminderDateTime r) (pgBool False) ) ) :: Transaction (Maybe Int)
   case reminderId of
     Nothing -> return Nothing
     Just rId -> return (Just rId)

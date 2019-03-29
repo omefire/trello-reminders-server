@@ -28,7 +28,7 @@ instance FromJSON Email
 data Reminder = Reminder { reminderID :: Int,
                            reminderName :: String,
                            reminderDescription :: String,
-                           reminderDateTime :: UTCTime,
+                           reminderDateTime :: LocalTime,
                            reminderEmails :: [Email],
                            reminderUserID :: Int
                          } deriving (Show, Generic)
