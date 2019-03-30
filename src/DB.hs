@@ -6,7 +6,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 
 
-module DB (getEmailsForUser, createReminder, getUserIDForEmail, setTrelloToken, getTrelloToken) where
+module DB (getEmailsForUser, createReminder, getUserIDForEmail, setTrelloToken, getTrelloToken, createUser) where
 
 import Opaleye
 import Control.Arrow (returnA)
@@ -17,6 +17,7 @@ import Data.Profunctor.Product.TH (makeAdaptorAndInstance)
 import qualified Database.PostgreSQL.Simple as PSQL
 import Control.Monad.Trans.Maybe
 import Control.Monad.Trans.Class
+import Control.Exception.Safe (throwString)
 
 
 -- DB Models
@@ -141,6 +142,12 @@ insertReminder r = do
     Nothing -> return Nothing
     Just rId -> return (Just rId)
 
+insertUser :: String -> Transaction (Maybe Int)
+insertUser email = do
+  mUserId <- ( insertReturningFirst userTable uuserID
+              ( UserP Nothing (pgString email) ) :: Transaction (Maybe Int) )
+  return mUserId
+
 insertUserReminder :: Int -> Int -> Transaction (Maybe (Int, Int))
 insertUserReminder userId reminderId = do
   res <- insertReturningFirst userReminderTable (\r -> (urUserID r, urReminderID r))
@@ -210,12 +217,12 @@ createReminder conn _rem = do
     Just remId -> return $ Right remId
 
 
-getUserIDForEmail :: PSQL.Connection -> String -> IO (Maybe UserID)
+getUserIDForEmail :: PSQL.Connection -> String -> IO (Maybe Int)
 getUserIDForEmail conn email = do
   res <- runOpaleyeT conn $ transaction $ selectUserIDForEmail
   case res of
     Nothing -> return Nothing
-    Just user -> return $ Just $ UserID (uuserID user)
+    Just user -> return $ Just $ (uuserID user) --UserID (uuserID user)
   where
     selectUserIDForEmail :: Transaction (Maybe (UserP Int String))
     selectUserIDForEmail = queryFirst $ userIDForEmailQuery
@@ -249,3 +256,10 @@ getTrelloToken conn trelloID = do
       token <- selectTable tokenTable -< ()
       restrict -< (pgString trelloID) .== ((tokTrelloID token))
       returnA -< (token)
+
+createUser :: PSQL.Connection -> String -> IO Int
+createUser conn email = do
+  res <- runOpaleyeT conn $ transaction $ insertUser email
+  case res of
+    Nothing -> throwString $ "An error occured while inserting a user row for: " <> email
+    Just uId -> return uId

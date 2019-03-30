@@ -37,7 +37,7 @@ import Servant.Server.StaticFiles
 -- http://localhost:8081/getEmailsForUser/omefire@gmail.com
 type EmailAPI = "getEmailsForUser" :> Capture "UserID" UserID :> Get '[JSON] [Email]
 type ReminderAPI = "createReminder" :> ReqBody '[JSON] Reminder :> Post '[JSON] Int
-type UserAPI = "getUserIDForEmail" :> Capture "Email" String :> Get '[JSON] (Maybe UserID)
+type UserAPI = "getUserIDForEmail" :> Capture "Email" String :> Get '[JSON] Int
 type TrelloTokenAPI = "setTrelloToken" :> ReqBody '[JSON] TrelloToken :> Post '[JSON] (String, String)
                  :<|> "getTrelloToken" :> Capture "TrelloID" String :> Get '[JSON] String
 type StaticAPI = "static" :> Raw
@@ -73,7 +73,7 @@ server = getEmailsForUser :<|> createReminder :<|> getUserIDForEmail :<|> setTre
 	--  "reminderID": 0,
 	--  "reminderName": "Reminder Name",
 	--  "reminderDescription": "Reminder Description",
-	--  "reminderDateTime": "2016-12-09T15:04:26.349857693845+05:00",
+	--  "reminderDateTime": "2016-12-09T15:04:26",
 	--  "reminderEmails": [ { "emailID": 1, "emailValue": "omefire@gmail.com"}],
 	--  "reminderUserID": 1
         -- }
@@ -100,7 +100,7 @@ server = getEmailsForUser :<|> createReminder :<|> getUserIDForEmail :<|> setTre
                 Left err -> throwError err505 { errBody = BLC.pack err }
                 Right id -> return id
 
-        getUserIDForEmail :: String -> Handler (Maybe UserID)
+        getUserIDForEmail :: String -> Handler Int
         getUserIDForEmail email = do
           eConnInfo <- liftIO $ CI.getConnectionInfo
           case eConnInfo of
@@ -115,7 +115,14 @@ server = getEmailsForUser :<|> createReminder :<|> getUserIDForEmail :<|> setTre
               let connString = [i|host='#{host connInfo}' dbname='#{database connInfo}' user='#{user connInfo}' password='#{password connInfo}' port='#{port connInfo}'|]
               conn <- liftIO $ PSQL.connectPostgreSQL $ BC.pack connString
               res <- liftIO $ DB.getUserIDForEmail conn email
-              return res
+              case res of
+                Nothing -> do
+                  -- If there is no user account associated with the email address, create the user account
+                  -- And then, since the user account has no emails associated to it, 
+                  uid <- liftIO $ DB.createUser conn email
+                  return uid
+                Just userId -> do
+                  return userId
 
         setTrelloToken :: TrelloToken -> Handler (String, String)
         setTrelloToken token = do

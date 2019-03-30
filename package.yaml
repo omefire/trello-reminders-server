@@ -39,6 +39,7 @@ dependencies:
 - time
 - opaleye-trans
 - interpolate
+- safe-exceptions
 
 library:
   source-dirs: src
