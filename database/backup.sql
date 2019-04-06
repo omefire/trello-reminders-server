@@ -15,35 +15,35 @@ SET check_function_bodies = false;
 SET client_min_messages = warning;
 SET row_security = off;
 
-ALTER TABLE ONLY public."Users_Reminders" DROP CONSTRAINT users_reminders_userid_fkey;
-ALTER TABLE ONLY public."Users_Reminders" DROP CONSTRAINT users_reminders_reminderid_fkey;
-ALTER TABLE ONLY public."Reminders_Emails" DROP CONSTRAINT reminders_emails_reminderid_fkey;
-ALTER TABLE ONLY public."Reminders_Emails" DROP CONSTRAINT reminders_emails_emailid_fkey;
-ALTER TABLE ONLY public."Users_Emails" DROP CONSTRAINT "Users_Emails_UserID_fkey";
-ALTER TABLE ONLY public."Users_Emails" DROP CONSTRAINT "Users_Emails_EmailID_fkey";
-DROP INDEX public.reminderdatetime_idx;
-ALTER TABLE ONLY public."Users_Reminders" DROP CONSTRAINT users_reminders_pkey;
-ALTER TABLE ONLY public."Reminders" DROP CONSTRAINT reminders_pkey;
-ALTER TABLE ONLY public."Reminders_Emails" DROP CONSTRAINT reminders_emails_pkey;
-ALTER TABLE ONLY public."Users" DROP CONSTRAINT "Users_pkey";
-ALTER TABLE ONLY public."Users_Emails" DROP CONSTRAINT "Users_Emails_pkey";
-ALTER TABLE ONLY public."Users" DROP CONSTRAINT "Users_Email_key";
-ALTER TABLE ONLY public."Tokens" DROP CONSTRAINT "Tokens_pkey";
-ALTER TABLE ONLY public."Tokens" DROP CONSTRAINT "Tokens_TrelloID_key";
-ALTER TABLE ONLY public."Emails" DROP CONSTRAINT "Emails_pkey";
-ALTER TABLE ONLY public."Emails" DROP CONSTRAINT "Emails_Email_key";
-ALTER TABLE public."Reminders" ALTER COLUMN "ID" DROP DEFAULT;
-DROP SEQUENCE public.reminders_id_seq1;
-DROP SEQUENCE public.reminders_id_seq;
-DROP TABLE public."Users_Reminders";
-DROP TABLE public."Users_Emails";
-DROP TABLE public."Users";
-DROP SEQUENCE public.user_id_seq;
-DROP TABLE public."Tokens";
-DROP TABLE public."Reminders_Emails";
-DROP TABLE public."Reminders";
-DROP TABLE public."Emails";
-DROP SEQUENCE public.email_id_seq;
+-- ALTER TABLE ONLY public."Users_Reminders" DROP CONSTRAINT users_reminders_userid_fkey;
+-- ALTER TABLE ONLY public."Users_Reminders" DROP CONSTRAINT users_reminders_reminderid_fkey;
+-- ALTER TABLE ONLY public."Reminders_Emails" DROP CONSTRAINT reminders_emails_reminderid_fkey;
+-- ALTER TABLE ONLY public."Reminders_Emails" DROP CONSTRAINT reminders_emails_emailid_fkey;
+-- ALTER TABLE ONLY public."Users_Emails" DROP CONSTRAINT "Users_Emails_UserID_fkey";
+-- ALTER TABLE ONLY public."Users_Emails" DROP CONSTRAINT "Users_Emails_EmailID_fkey";
+-- DROP INDEX public.reminderdatetime_idx;
+-- ALTER TABLE ONLY public."Users_Reminders" DROP CONSTRAINT users_reminders_pkey;
+-- ALTER TABLE ONLY public."Reminders" DROP CONSTRAINT reminders_pkey;
+-- ALTER TABLE ONLY public."Reminders_Emails" DROP CONSTRAINT reminders_emails_pkey;
+-- ALTER TABLE ONLY public."Users" DROP CONSTRAINT "Users_pkey";
+-- ALTER TABLE ONLY public."Users_Emails" DROP CONSTRAINT "Users_Emails_pkey";
+-- ALTER TABLE ONLY public."Users" DROP CONSTRAINT "Users_Email_key";
+-- ALTER TABLE ONLY public."Tokens" DROP CONSTRAINT "Tokens_pkey";
+-- ALTER TABLE ONLY public."Tokens" DROP CONSTRAINT "Tokens_TrelloID_key";
+-- ALTER TABLE ONLY public."Emails" DROP CONSTRAINT "Emails_pkey";
+-- ALTER TABLE ONLY public."Emails" DROP CONSTRAINT "Emails_Email_key";
+-- ALTER TABLE public."Reminders" ALTER COLUMN "ID" DROP DEFAULT;
+-- DROP SEQUENCE public.reminders_id_seq1;
+-- DROP SEQUENCE public.reminders_id_seq;
+-- DROP TABLE public."Users_Reminders";
+-- DROP TABLE public."Users_Emails";
+-- DROP TABLE public."Users";
+-- DROP SEQUENCE public.user_id_seq;
+-- DROP TABLE public."Tokens";
+-- DROP TABLE public."Reminders_Emails";
+-- DROP TABLE public."Reminders";
+-- DROP TABLE public."Emails";
+-- DROP SEQUENCE public.email_id_seq;
 --
 -- Name: email_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
@@ -72,7 +72,7 @@ CREATE TABLE public."Emails" (
 );
 
 
-ALTER TABLE public."Emails" OWNER TO postgres;
+-- ALTER TABLE public."Emails" OWNER TO postgres;
 
 --
 -- Name: Reminders; Type: TABLE; Schema: public; Owner: postgres
