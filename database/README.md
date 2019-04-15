@@ -1,7 +1,7 @@
 
 ### To build and run the postgres container
-- docker build -t o .
-- docker run --rm -dit -p 5432:5432 --name tdb o
+- docker build -t postgres .
+- docker run --rm -dit -p 5432:5432 --name tdb postgres
 - docker exec -it tdb bash
 
 ### To build and run the pgAdmin4 container
