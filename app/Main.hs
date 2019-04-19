@@ -12,6 +12,7 @@ import Servant.Server
 import GHC.Generics
 import Network.Wai
 import Network.Wai.Handler.Warp
+import Network.Wai.Handler.WarpTLS
 import Data.Aeson
 import Data.Aeson.Types
 import Data.Proxy
@@ -169,4 +170,8 @@ app :: Application
 app = serve api newServer
 
 main :: IO ()
-main = run 8081 app
+-- main = run 8081 app
+main = runTLS tlsOpts warpOpts app
+  where
+    tlsOpts = tlsSettings "./certificate.pem" "./key.pem"
+    warpOpts = setPort 8081 defaultSettings
