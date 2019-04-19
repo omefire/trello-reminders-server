@@ -5,6 +5,12 @@ A server that exposes a Web API to be used by the [trello-reminders-extension](h
 
 ## How to install & run the server?
 
+0- ```
+     * openssl genrsa -out key.pem 2048
+     * openssl req -new -key key.pem -out certificate.csr
+     * openssl x509 -req -in certificate.csr -signkey key.pem -out certificate.pem
+```
+
 1- ```stack build```
 
 2- ```$(stack exec trello-reminders-server-exe)```
