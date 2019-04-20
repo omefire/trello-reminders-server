@@ -33,6 +33,7 @@ import Types
 import Data.String.Interpolate
 import Control.Concurrent
 import Servant.Server.StaticFiles
+import Network.Wai.Middleware.Cors
 
 
 -- http://localhost:8081/getEmailsForUser/omefire@gmail.com
@@ -40,7 +41,7 @@ type EmailAPI = "getEmailsForUser" :> Capture "UserID" UserID :> Get '[JSON] [Em
 type ReminderAPI = "createReminder" :> ReqBody '[JSON] Reminder :> Post '[JSON] Int
 type UserAPI = "getUserIDForEmail" :> Capture "Email" String :> Get '[JSON] Int
 type TrelloTokenAPI = "setTrelloToken" :> ReqBody '[JSON] TrelloToken :> Post '[JSON] (String, String)
-                 :<|> "getTrelloToken" :> Capture "TrelloID" String :> Get '[JSON] String
+                 :<|> "getTrelloToken" :> Capture "TrelloID" String :> Get '[JSON] String -- (Headers '[Header "Acess-Control-Allow-Origin" String] String)
 type StaticAPI = "static" :> Raw
 
 type API = EmailAPI :<|> ReminderAPI :<|> UserAPI :<|> TrelloTokenAPI
@@ -167,7 +168,17 @@ api :: Proxy NewAPI
 api = Proxy
 
 app :: Application
-app = serve api newServer
+app = (cors (const policy)) $ serve api newServer
+  where policy = Just CorsResourcePolicy {
+            corsOrigins = Nothing,
+            corsMethods = ["GET", "POST"],
+            corsRequestHeaders = ["authorization", "content-type"],
+            corsExposedHeaders = Nothing,
+            corsMaxAge = Just $ 60*60*24, -- one day,
+            corsVaryOrigin = False,
+            corsRequireOrigin = True,
+            corsIgnoreFailures = False
+          }
 
 main :: IO ()
 -- main = run 8081 app

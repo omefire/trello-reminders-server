@@ -41,6 +41,7 @@ dependencies:
 - interpolate
 - safe-exceptions
 - warp-tls
+- wai-cors
 
 library:
   source-dirs: src
