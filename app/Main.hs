@@ -184,5 +184,5 @@ main :: IO ()
 -- main = run 8081 app
 main = runTLS tlsOpts warpOpts app
   where
-    tlsOpts = tlsSettings "./certificate.pem" "./key.pem"
+    tlsOpts = tlsSettings "./certificate.crt" "./private.key"
     warpOpts = setPort 8081 defaultSettings
