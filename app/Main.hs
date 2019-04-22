@@ -176,7 +176,7 @@ app = (cors (const policy)) $ serve api newServer
             corsExposedHeaders = Nothing,
             corsMaxAge = Just $ 60*60*24, -- one day,
             corsVaryOrigin = False,
-            corsRequireOrigin = True,
+            corsRequireOrigin = False,
             corsIgnoreFailures = False
           }
 
