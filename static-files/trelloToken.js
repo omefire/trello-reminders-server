@@ -17,7 +17,7 @@
       trelloID: trelloid,
       trelloToken: token
     };
-    fetch('http://localhost:8081/setTrelloToken', {
+    fetch('https://api.trelloreminders.com/setTrelloToken', {
       method: 'POST',
       body: JSON.stringify(data),
       headers: new Headers({
